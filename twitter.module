@@ -1,0 +1,67 @@
+<?php
+// $Id: twitter.module,v 1.1 2007/01/23 17:05:50 walkah Exp $
+
+define('TWITTER_URL', 'http://twitter.com/statuses/update.xml');
+
+/**
+ * Implementation of hook_user()
+ */
+function twitter_user($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'form':
+      $form['twitter'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Twitter settings'));
+      $form['twitter']['twitter_user'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Username'),
+        '#default_value' => $edit['twitter_user'],
+        '#description' => t('The username (email address) associated with your twitter.com account'));
+      $form['twitter']['twitter_pass'] = array(
+        '#type' => 'password',
+        '#title' => t('Password'));
+      $form['twitter']['twitter_text'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Text format'),
+        '#default_value' => $edit['twitter_text'],
+        '#description' => t('Format of the text to submit. Use !title and !url for the post title and url respectively.'));
+      return $form;
+    case 'insert':
+    case 'update':
+      if (!empty($edit['twitter_user']) && !empty($edit['twitter_pass'])) {
+        $edit['twitter_encrypted'] = base64_encode($edit['twitter_user'] .':'. $edit['twitter_pass']);
+      }
+      unset($edit['twitter_pass']);
+  }
+}
+
+function twitter_nodeapi(&$node, $op) {
+  switch ($op) {
+    case 'insert':
+      global $user;
+      if ($node->status == 1) {
+        twitter_post($node, $user);
+      }
+  }
+}
+
+/**
+ * Implements the twitter posting API per:
+ * http://twitter.com/help/api
+ */
+function twitter_post($node, $account) {
+  if (empty($account->twitter_encrypted)) {
+    return false;
+  }
+
+  $text = ($account->twitter_text) ? $account->twitter_text : 'New post: !title (!url)';
+  $text = t($text, array('!title' => $node->title,
+                         '!url' => url('node/' . $node->nid, NULL, NULL, TRUE)));
+  
+  $headers = array('Authorization' => 'Basic '. $account->twitter_encrypted,
+                   'Content-type' => 'application/x-www-form-urlencoded');
+  $data = 'status='. urlencode($text);
+
+  $result = drupal_http_request(TWITTER_URL, $headers, 'POST', $data);
+  drupal_set_message(t('Posted to twitter.com'));
+}

@@ -1,0 +1,6 @@
+; $Id: twitter.info,v 1.1 2007/01/23 17:05:50 walkah Exp $
+name = Twitter
+description = This module posts blog updates to twitter.com
+version = "$Name:  $"
+
+
