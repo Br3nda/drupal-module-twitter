@@ -1,4 +1,4 @@
-; $Id: twitter.info,v 1.2 2007/06/18 22:54:04 dww Exp $
+; $Id: twitter.info,v 1.1.2.1 2007/06/18 23:07:10 dww Exp $
 name = Twitter
 description = This module posts blog updates to twitter.com
 
