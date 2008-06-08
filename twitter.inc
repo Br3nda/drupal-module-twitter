@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.1 2008/06/08 04:48:33 walkah Exp $
+// $Id: twitter.inc,v 1.2 2008/06/08 04:56:45 walkah Exp $
 
 /**
  * Generate a twitter posting form for the given user.
@@ -154,6 +154,15 @@ function twitter_cache_user($twitter_user = array()) {
   db_query("DELETE FROM {twitter_account} WHERE twitter_uid = %d", $twitter_user['twitter_uid']);
   drupal_write_record('twitter_account', $twitter_user);
 }
+
+function twitter_cache_status($status = array(), $silent = FALSE) {
+  db_query("DELETE FROM {twitter} WHERE twitter_id = %d", $status['twitter_id']);
+  drupal_write_record('twitter', $status);
+  if (!$silent) {
+    module_invoke_all('twitter_status_update', $status);
+  }
+}
+
 
 function twitter_get_user_accounts($uid) {
   $sql = "SELECT *, tu.screen_name AS screen_name FROM {twitter_user} tu LEFT JOIN {twitter_account} ta ON (tu.screen_name = ta.screen_name) WHERE tu.uid = %d";
