@@ -1,0 +1,144 @@
+<?php
+// $Id: twitter.install,v 1.1 2008/06/08 04:48:33 walkah Exp $
+
+/**
+ * Implementation of hook_schema).
+ */
+function twitter_schema() {
+  $schema['twitter'] = array(
+    'description' => t("Stores individual Twitter posts."),
+    'fields' => array(
+      'twitter_id' => array(
+        'description' => t("Unique identifier for each {twitter} post."),
+        'type' => 'int',
+        'not null' => TRUE
+      ),
+      'screen_name' => array(
+        'description' => t("Screen name of the {twitter} user."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'created_at' => array(
+        'description' => t("Date and time the {twitter} post was created."),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'created_time' => array(
+        'description' => t("A duplicate of {twitter}.created_at in UNIX timestamp format."),
+        'type' => 'int',
+        'not null' => TRUE
+      ),
+      'text' => array(
+        'description' => t("The text of the {twitter} post."),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE
+      ),
+      'source' => array(
+        'description' => t("The application that created the {twitter} post."),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE
+      ),
+    ),
+    'indexes' => array('screen_name' => array('screen_name')),
+    'primary key' => array('twitter_id'),
+  );
+
+  $schema['twitter_account'] = array(
+    'description' => t("Stores information on specific Twitter user accounts."),
+    'fields' => array(
+      'twitter_uid' => array(
+        'description' => t("The unique identifier of the {twitter_account}."),
+        'type' => 'int',
+        'not null' => TRUE
+      ),
+      'name' => array(
+        'description' => t("The unique login name of the {twitter_account} user."),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'screen_name' => array(
+        'description' => t("The full name of the {twitter_account} user."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'description' => array(
+        'description' => t("The description/biography associated with the {twitter_account}."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'profile_image_url' => array(
+        'description' => t("The url of the {twitter_account}'s profile image."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'url' => array(
+        'description' => t("The url of the {twitter_account}'s home page."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'protected' => array(
+        'description' => t("Boolean flag indicating whether the {twitter_account}'s posts are publically accessible."),
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      ),
+      'last_refresh' => array(
+        'description' => t("A UNIX timestamp marking the date Twitter statuses were last fetched on."),
+        'type' => 'int',
+        'not null' => TRUE
+      ),      
+    ),
+    'indexes' => array('screen_name' => array('screen_name')),
+    'primary key' => array('twitter_uid'),
+  );
+
+  $schema['twitter_user'] = array(
+    'fields' => array(
+      'uid' => array(
+        'description' => t("The Drupal ID of the user account associated with the Twitter account."),
+        'type' => 'int',
+        'not null' => TRUE
+      ),
+      'screen_name' => array(
+        'description' => t("The unique login name for the Twitter account."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'password' => array(
+        'description' => t("The password for the Twitter account."),
+        'type' => 'varchar',
+        'length' => 64
+      ),            
+    ),
+    'primary key' => array('uid', 'screen_name'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function twitter_install() {
+  // Create tables.
+  drupal_install_schema('twitter');
+}
+
+/**
+ * Previous versions of the Twitter module had no database schema.
+ * We're safe just running the basic install for update_1.
+ */
+function twitter_update_1() {
+  twitter_install();
+}
+
+function twitter_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('twitter');
+}

@@ -1,67 +1,89 @@
 <?php
-// $Id: twitter.module,v 1.1 2007/01/23 17:05:50 walkah Exp $
-
-define('TWITTER_URL', 'http://twitter.com/statuses/update.xml');
+// $Id: twitter.module,v 1.2 2008/06/08 04:48:33 walkah Exp $
 
 /**
- * Implementation of hook_user()
+ * Implementation of hook_meu()
  */
-function twitter_user($op, &$edit, &$account, $category = NULL) {
+function twitter_menu() {
+  $items = array();
+
+  $items['admin/settings/twitter'] = array(
+    'title' => 'Twitter setup',
+    'description' => 'Twitter module settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_admin_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'twitter.pages.inc'
+  );
+
+  $items['user/%user/edit/twitter'] = array(
+    'title' => 'Twitter accounts',
+    'page callback' => 'twitter_user_settings',
+    'page arguments' => array(1),
+    'access arguments' => array('add twitter accounts'),
+    'weight' => 10,
+    'file' => 'twitter.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function twitter_perm() {
+  array(
+    'add twitter accounts'
+  );
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function twitter_form_alter(&$form, $form_state, $form_id) {
+  module_load_include('inc', 'twitter');
+
+  if (substr($form_id, -10) == '_node_form') {
+    $twitter_form = twitter_form();
+    if (!$twitter_form) {
+      return;
+    }
+    $form['twitter'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Post to twitter.com'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+    );
+    $form['twitter']['post'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Announce this post on Twitter'),
+      '#default_value' => (empty($form['nid']['#value'])),
+      '#id' => 'twitter-toggle',
+    );
+    $form['twitter'] += $twitter_form;
+    $form['twitter']['status']['#default_value'] = variable_get('twitter_default_format', 'New post: !title (!url)');
+    $form['twitter']['status']['#description'] = t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.');
+  } 
+}
+
+function twitter_nodeapi(&$node, $op, $a1) {
+  module_load_include('inc', 'twitter');
+  
   switch ($op) {
-    case 'form':
-      $form['twitter'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Twitter settings'));
-      $form['twitter']['twitter_user'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Username'),
-        '#default_value' => $edit['twitter_user'],
-        '#description' => t('The username (email address) associated with your twitter.com account'));
-      $form['twitter']['twitter_pass'] = array(
-        '#type' => 'password',
-        '#title' => t('Password'));
-      $form['twitter']['twitter_text'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Text format'),
-        '#default_value' => $edit['twitter_text'],
-        '#description' => t('Format of the text to submit. Use !title and !url for the post title and url respectively.'));
-      return $form;
     case 'insert':
     case 'update':
-      if (!empty($edit['twitter_user']) && !empty($edit['twitter_pass'])) {
-        $edit['twitter_encrypted'] = base64_encode($edit['twitter_user'] .':'. $edit['twitter_pass']);
+      if ($node->status && $node->twitter['post']) {
+        $twitter_accounts = twitter_get_user_accounts($node->uid);
+        $replacements = array('!title' => $node->title,
+                              '!url' => url('node/'. $node->nid, array('absolute' => TRUE)),
+                              '!user' => $node->name);
+        $status = strtr($node->twitter['status'], $replacements);
+        $pass = $twitter_accounts[$node->twitter['account']]['password'];
+        twitter_set_status($node->twitter['account'], $pass, $status);
+        drupal_set_message(t('Successfully posted to Twitter'));
       }
-      unset($edit['twitter_pass']);
+      break;
   }
-}
-
-function twitter_nodeapi(&$node, $op) {
-  switch ($op) {
-    case 'insert':
-      global $user;
-      if ($node->status == 1) {
-        twitter_post($node, $user);
-      }
-  }
-}
-
-/**
- * Implements the twitter posting API per:
- * http://twitter.com/help/api
- */
-function twitter_post($node, $account) {
-  if (empty($account->twitter_encrypted)) {
-    return false;
-  }
-
-  $text = ($account->twitter_text) ? $account->twitter_text : 'New post: !title (!url)';
-  $text = t($text, array('!title' => $node->title,
-                         '!url' => url('node/' . $node->nid, NULL, NULL, TRUE)));
-  
-  $headers = array('Authorization' => 'Basic '. $account->twitter_encrypted,
-                   'Content-type' => 'application/x-www-form-urlencoded');
-  $data = 'status='. urlencode($text);
-
-  $result = drupal_http_request(TWITTER_URL, $headers, 'POST', $data);
-  drupal_set_message(t('Posted to twitter.com'));
 }
