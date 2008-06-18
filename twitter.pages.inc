@@ -1,45 +1,163 @@
 <?php
-// $Id: twitter.pages.inc,v 1.1 2008/06/08 04:48:33 walkah Exp $
+// $Id: twitter.pages.inc,v 1.2 2008/06/18 03:34:33 eaton Exp $
 
 /**
  *
  */
 function twitter_admin_form() {
   $form = array();
-  
-  $form['twitter_default_format'] = array(
+
+  $form['import'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Twitter import'),
+    '#description' => t('Import and display the Twitter statuses of site users who have entered their Twitter account information.'),
+  );
+
+  $form['import']['twitter_import'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Import Twitter statuses'),
+    '#default_value' => variable_get('twitter_import', TRUE),
+  );
+
+  $periods = array(0 => t('Never'));
+  $periods += drupal_map_assoc(array(604800, 2419200, 7257600, 31449600), 'format_interval');
+  $form['import']['twitter_expire'] = array(
+    '#type' => 'select',
+    '#title' => t('Delete old statuses'),
+    '#default_value' => variable_get('amazon_refresh_schedule', 0),
+    '#options' => $periods
+  );
+
+  $form['posting'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Twitter posting'),
+    '#description' => t('Users with proper permissions will be given the option to post announcements to their Twitter accounts when they create new content.'),
+  );
+
+  $form['posting']['twitter_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Node types'),
+    '#options' => node_get_types('names'),
+    '#default_value' => variable_get('twitter_types', array('story' => 'story', 'blog' => 'blog')),
+  );
+
+  $form['posting']['twitter_default_format'] = array(
     '#type' => 'textfield',
     '#title' => t('Default format string'),
     '#maxlength' => 140,
-    '#description' => t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.')
+    '#description' => t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.'),
+    '#default_value' => variable_get('twitter_default_format', 'New post: !title (!url)'),
   );
-  
-  $form['twitter_types'] = array(
-    
-  );
- 
-  return system_settings_form($form); 
+
+  return system_settings_form($form);
 }
 
 function twitter_user_settings($account) {
   module_load_include('inc', 'twitter');
-  
+
+  $output = '';
   $twitter_accounts = twitter_get_user_accounts($account->uid);
-  
-  $header = array('', t('Name'), t('Description'));
-  $rows = array();
-  
+  if (!empty($twitter_accounts)) {
+    $output .= drupal_get_form('twitter_account_list_form', $twitter_accounts);
+  }
+  $output .= drupal_get_form('twitter_add_account', $account);
+
+  return $output;
+}
+
+function twitter_account_list_form($form_state, $twitter_accounts = array()) {
+  $form['#tree'] = TRUE;
+  $form['accounts'] = array();
+
   foreach ($twitter_accounts as $twitter_account) {
+    $form['accounts'][] = _twitter_account_list_row($twitter_account);
+  }
+
+  if (!empty($twitter_accounts)) {
+    $form['buttons']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save changes'),
+    );
+  }
+
+  return $form;
+}
+
+function _twitter_account_list_row($account) {
+  $form['#account'] = $account;
+
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $account['uid'],
+  );
+
+  $form['screen_name'] = array(
+    '#type' => 'value',
+    '#value' => $account['screen_name'],
+  );
+
+  $form['image'] = array(
+    '#type' => 'markup',
+    '#value' => theme('image', $account['profile_image_url'], '', '', array(), FALSE),
+  );
+
+  $form['visible_name'] = array(
+    '#type' => 'markup',
+    '#value' => l($account['screen_name'], 'http://www.twitter.com/' . $account['screen_name']),
+  );
+
+  $form['description'] = array(
+    '#type' => 'markup',
+    '#value' => filter_xss($account['description']),
+  );
+
+  $form['protected'] = array(
+    '#type' => 'markup',
+    '#value' => empty($account['protected']) ? t('No') : t('Yes'),
+  );
+
+  $form['import'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => $account['import'],
+  );
+
+  $form['delete'] = array(
+    '#type' => 'checkbox',
+  );
+  return $form;
+}
+
+function theme_twitter_account_list_form($form) {
+  $header = array('', t('Name'), t('Description'), t('Private'), t('Import'), t('Delete'));
+  $rows = array();
+
+  foreach (element_children($form['accounts']) as $key) {
+    $element = &$form['accounts'][$key];
     $rows[] = array(
-      '<img src="'.$twitter_account['profile_image_url'].'" />',
-      $twitter_account['screen_name'],
-      $twitter_account['description'],
+      drupal_render($element['image']),
+      drupal_render($element['uid']) . drupal_render($element['screen_name']) . drupal_render($element['visible_name']),
+      drupal_render($element['description']),
+      drupal_render($element['protected']),
+      drupal_render($element['import']),
+      drupal_render($element['delete']),
     );
   }
 
   $output = theme('table', $header, $rows);
-  $output .= drupal_get_form('twitter_add_account', $account);
+  $output .= drupal_render($form);
   return $output;
+}
+
+function twitter_account_list_form_submit($form, &$form_state) {
+  $accounts = $form_state['values']['accounts'];
+  foreach($accounts as $account) {
+    if (empty($account['delete'])) {
+      twitter_user_save($account);
+    }
+    else {
+      twitter_user_delete($account['uid'], $account['screen_name']);
+    }
+  }
 }
 
 function twitter_add_account($form_state, $account = NULL) {
@@ -47,11 +165,12 @@ function twitter_add_account($form_state, $account = NULL) {
     global $user;
     $account = $user;
   }
-  
+
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $account->uid,
   );
+
   $form['screen_name'] = array(
     '#type' => 'textfield',
     '#required' => TRUE,
@@ -63,17 +182,24 @@ function twitter_add_account($form_state, $account = NULL) {
     '#title' => t('Password'),
   );
 
+  $form['import'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Import statuses from this account'),
+    '#default_value' => TRUE,
+    '#access' => FALSE,
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Add account'),
   );
 
-  return $form;  
+  return $form;
 }
 
 function twitter_add_account_validate($form, &$form_state) {
   module_load_include('inc', 'twitter');
-  
+
   $verify = FALSE;
 
   $pass = $form_state['values']['password'];
@@ -93,8 +219,8 @@ function twitter_add_account_validate($form, &$form_state) {
 
 function twitter_add_account_submit($form, &$form_state) {
   module_load_include('inc', 'twitter');
-   
+
   if (!empty($form_state['values']['screen_name'])) {
-    twitter_user_save($form_state['values']);
+    twitter_user_save($form_state['values'], TRUE);
   }
 }

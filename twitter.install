@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.1 2008/06/08 04:48:33 walkah Exp $
+// $Id: twitter.install,v 1.2 2008/06/18 03:34:33 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -55,22 +55,33 @@ function twitter_schema() {
         'type' => 'int',
         'not null' => TRUE
       ),
-      'name' => array(
+      'screen_name' => array(
         'description' => t("The unique login name of the {twitter_account} user."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'name' => array(
+        'description' => t("The full name of the {twitter_account} user."),
         'type' => 'varchar',
         'length' => 64,
         'not null' => TRUE,
         'default' => ''
       ),
-      'screen_name' => array(
-        'description' => t("The full name of the {twitter_account} user."),
-        'type' => 'varchar',
-        'length' => 255
-      ),
       'description' => array(
         'description' => t("The description/biography associated with the {twitter_account}."),
         'type' => 'varchar',
         'length' => 255
+      ),
+      'location' => array(
+        'description' => t("The location of the {twitter_account}'s owner."),
+        'type' => 'varchar',
+        'length' => 255
+      ),
+      'followers_count' => array(
+        'description' => t("The number of users following this {twitter_account}."),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
       ),
       'profile_image_url' => array(
         'description' => t("The url of the {twitter_account}'s profile image."),
@@ -83,16 +94,17 @@ function twitter_schema() {
         'length' => 255
       ),
       'protected' => array(
-        'description' => t("Boolean flag indicating whether the {twitter_account}'s posts are publically accessible."),
+        'description' => t("Boolean flag indicating whether the {twitter_account}'s posts are publicly accessible."),
         'type' => 'int',
-        'not null' => FALSE,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
         'default' => 0
       ),
       'last_refresh' => array(
         'description' => t("A UNIX timestamp marking the date Twitter statuses were last fetched on."),
         'type' => 'int',
         'not null' => TRUE
-      ),      
+      ),
     ),
     'indexes' => array('screen_name' => array('screen_name')),
     'primary key' => array('twitter_uid'),
@@ -114,9 +126,17 @@ function twitter_schema() {
         'description' => t("The password for the Twitter account."),
         'type' => 'varchar',
         'length' => 64
-      ),            
+      ),
+      'import' => array(
+        'description' => t("Boolean flag indicating whether the {twitter_user}'s posts should be pulled in by the site."),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1
+      ),
     ),
     'primary key' => array('uid', 'screen_name'),
+    'indexes' => array('screen_name' => array('screen_name'), 'uid' => array('uid'), 'import' => array('import')),
   );
 
   return $schema;
@@ -134,8 +154,35 @@ function twitter_install() {
  * Previous versions of the Twitter module had no database schema.
  * We're safe just running the basic install for update_1.
  */
-function twitter_update_1() {
+function twitter_update_6000() {
   twitter_install();
+}
+
+function twitter_update_6001() {
+  $ret = array();
+  $attributes = array(
+    'description' => t("Boolean flag indicating whether the {twitter_user}'s posts should be pulled in by the site."),
+    'unsigned' => TRUE,
+    'default' => 1,
+    'not null' => TRUE,
+  );
+  db_add_column($ret, 'twitter_user', 'import', 'int', $attributes);
+
+  $attributes = array(
+    'description' => t("The location of the {twitter_account}'s owner."),
+    'length' => 255
+  );
+  db_add_column($ret, 'twitter_account', 'location', 'varchar(255)', $attributes);
+
+  $attributes = array(
+    'description' => t("The number of users following this {twitter_account}."),
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0
+  );
+  db_add_column($ret, 'twitter_account', 'followers_count', 'int', $attributes);
+
+  return $ret;
 }
 
 function twitter_uninstall() {
