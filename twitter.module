@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.module,v 1.3.2.1 2008/07/09 01:02:05 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -136,6 +136,6 @@ function twitter_cron() {
 
   // Nuke old statuses.
   if ($age = variable_get('twitter_expire', 0)) {
-    db_query('DELETE {twitter} WHERE created_time < %d', time() - $age);
+    db_query('DELETE FROM {twitter} WHERE created_time < %d', time() - $age);
   }
 }

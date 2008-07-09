@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.1 2008/07/09 01:02:05 eaton Exp $
 
 /**
  * @file
@@ -166,14 +166,15 @@ function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
     return array();
   }
 
-  $results = _twitter_convert_xml_to_array($results->data);
-
-  if ($cache) {
-    foreach($results as $user) {
-      twitter_cache_account($user);
+  if ($results = _twitter_convert_xml_to_array($results->data)) {
+    if ($cache) {
+      foreach($results as $user) {
+        twitter_cache_account($user);
+      }
     }
+    return $results[0];
   }
-  return $results;
+  return array();
 }
 
 /**
@@ -386,21 +387,21 @@ function twitter_get_user_accounts($uid) {
   return $accounts;
 }
 
-function twitter_user_save($user = array(), $force_import = FALSE) {
-  $user += array(
+function twitter_user_save($account = array(), $force_import = FALSE) {
+  $account += array(
     'screen_name' => '',
     'import'      => 1,
   );
 
-  if (db_result(db_query("SELECT 1 FROM {twitter_user} WHERE uid = %d AND screen_name = '%s'", $user['uid'], $user['screen_name']))) {
-    drupal_write_record('twitter_user', $user, array('uid', 'screen_name'));
+  if (db_result(db_query("SELECT 1 FROM {twitter_user} WHERE uid = %d AND screen_name = '%s'", $account['uid'], $account['screen_name']))) {
+    drupal_write_record('twitter_user', $account, array('uid', 'screen_name'));
   }
   else {
-    drupal_write_record('twitter_user', $user);
+    drupal_write_record('twitter_user', $account);
   }
 
   if ($force_import && $account['import']) {
-    $account = twitter_fetch_account_info($user['screen_name'], $user['password']);
+    $temp = twitter_fetch_account_info($account['screen_name'], $account['password']);
     if (empty($account['protected'])) {
       $statuses = twitter_fetch_timeline($account['screen_name']);
     }
