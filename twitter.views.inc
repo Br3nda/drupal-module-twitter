@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views.inc,v 1.2 2008/08/22 03:57:11 eaton Exp $
+// $Id: twitter.views.inc,v 1.3 2008/08/22 04:00:14 eaton Exp $
 /**
  * @file
  * Provide views data and handlers for twitter.module
@@ -344,7 +344,7 @@ class twitter_views_handler_field_xss extends views_handler_field {
     $value = _filter_url($value, FILTER_DEFAULT);
     $value = preg_replace(
       array('/^@([a-z0-9_]{0,15})/i', '/(\s+)@([a-z0-9_]{0,15})/i'),
-      array('<a href="http://twitter.com/${1}">@${1}</a>', '${1}@<a href="http://twitter.com/${2}">${2}</a>'),
+      array('<a href="http://twitter.com/${1}">@${1}</a>', '${1}<a href="http://twitter.com/${2}">@${2}</a>'),
       $value); 
     return filter_xss($value);
   }
