@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.module,v 1.4 2008/08/22 03:57:11 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -81,7 +81,7 @@ function twitter_nodeapi(&$node, $op, $a1) {
     case 'insert':
     case 'update':
       if (!empty($node->status) && !empty($node->twitter) && !empty($node->twitter['post'])) {
-        $twitter_accounts = twitter_get_user_accounts($node->uid);
+        $twitter_accounts = twitter_get_user_accounts($node->uid, TRUE);
         $replacements = array('!title' => $node->title,
                               '!url' => url('node/'. $node->nid, array('absolute' => TRUE)),
                               '!user' => $node->name);
@@ -116,8 +116,9 @@ function twitter_cron() {
 
   $results = db_query_range($sql, 0, 20);
   while ($account = db_fetch_array($results)) {
-    // Use the 'cheaper' unauthenticated version if the account isn't protected.
-    if (empty($account['protected'])) {
+    // Use the 'cheaper' unauthenticated version if the account isn't protected,
+    // or if a password hasn't been specified.
+    if (empty($account['protected']) || empty($account['password'])) {
       $statuses = twitter_fetch_timeline($account['screen_name']);
     }
     else {

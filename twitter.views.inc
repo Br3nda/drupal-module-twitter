@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views.inc,v 1.1 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.views.inc,v 1.2 2008/08/22 03:57:11 eaton Exp $
 /**
  * @file
  * Provide views data and handlers for twitter.module
@@ -68,7 +68,7 @@ function twitter_views_data() {
     'title' => t('Message text'),
     'help' => t('The text of the Twitter message.'),
     'field' => array(
-      'handler' => 'views_handler_field_xss',
+      'handler' => 'twitter_views_handler_field_xss',
       'click sortable' => TRUE,
     ),
     'filter' => array(
@@ -334,6 +334,21 @@ class twitter_views_handler_profile_image extends views_handler_field {
   }
 }
 
+
+/**
+ * Process Twitter-style @usernames and URLs before filtering XSS.
+ */
+class twitter_views_handler_field_xss extends views_handler_field {
+  function render($values) {
+    $value = $values->{$this->field_alias};
+    $value = _filter_url($value, FILTER_DEFAULT);
+    $value = preg_replace(
+      array('/^@([a-z0-9_]{0,15})/i', '/(\s+)@([a-z0-9_]{0,15})/i'),
+      array('<a href="http://twitter.com/${1}">@${1}</a>', '${1}@<a href="http://twitter.com/${2}">${2}</a>'),
+      $value); 
+    return filter_xss($value);
+  }
+}
 
 /**
  * @}
