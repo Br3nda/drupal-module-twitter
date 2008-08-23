@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.5 2008/08/23 04:27:40 eaton Exp $
+// $Id: twitter.module,v 1.6 2008/08/23 11:08:30 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -143,17 +143,70 @@ function twitter_cron() {
 
 
 /**
+ * Implementation of hook_filter().
+ * - Twitter @username converter:
+ *     .Converts Twitter-style @usernames into links to Twitter account pages.
+ * - Twitter #hashtag converter:
+ *     .Converts Twitter-style #hashtags into links to hashtags.org.
+ */
+function twitter_filter($op, $delta = 0, $format = -1, $text = '') {
+  switch ($op) {
+    case 'list':
+      return array(0 => t('Twitter @username converter'), 1 => t('Twitter #hashtag converter'));
+
+    case 'description':
+      switch ($delta) {
+        case 0:
+          return t('Converts Twitter-style @usernames into links to Twitter account pages.');
+        case 1:
+          return t('Converts Twitter-style #hashtags into links to hashtags.org.');
+        default:
+          return;
+      }
+
+    case 'process':
+      switch ($delta) {
+        case 0:
+          return twitter_link_filter($text);
+        case 1:
+          return twitter_link_filter($text, '#', 'http://hashtags.org/tag/');
+        default:
+          return $text;
+      }
+
+    default:
+      return $text;
+  }
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ */
+function twitter_filter_tips($delta, $format, $long = FALSE) {
+  global $base_url;
+  switch ($delta) {
+    case 0:
+      return t('Twitter-style @usersnames are linked to their Twitter account pages.');
+
+    case 1:
+      return t('Twitter-style #hashtags are linked to !url.', array('!url' => '<a href="http://hashtags.org">hashtags.org</a>'));
+  }
+}
+
+/**
  * This helper function converts Twitter-style @usernames and #hashtags into 
  * actual links.
  */
 function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitter.com/') {
   $matches = array(
     '/^' . $prefix . '([a-z0-9_]{0,15})/i',
-    '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i'
+    '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i',
+    '/\>' . $prefix . '([a-z0-9_]{0,15})/i'
   );
   $replacements = array(
     '<a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
-    '${1}<a href="' . $destination . '${2}">' . $prefix . '${2}</a>'
+    '${1}<a href="' . $destination . '${2}">' . $prefix . '${2}</a>',
+    '><a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
   );
   return preg_replace($matches, $replacements, $text); 
 }
