@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.4 2008/08/22 03:57:11 eaton Exp $
+// $Id: twitter.module,v 1.5 2008/08/23 04:27:40 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -139,4 +139,21 @@ function twitter_cron() {
   if ($age = variable_get('twitter_expire', 0)) {
     db_query('DELETE {twitter} WHERE created_time < %d', time() - $age);
   }
+}
+
+
+/**
+ * This helper function converts Twitter-style @usernames and #hashtags into 
+ * actual links.
+ */
+function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitter.com/') {
+  $matches = array(
+    '/^' . $prefix . '([a-z0-9_]{0,15})/i',
+    '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i'
+  );
+  $replacements = array(
+    '<a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
+    '${1}<a href="' . $destination . '${2}">' . $prefix . '${2}</a>'
+  );
+  return preg_replace($matches, $replacements, $text); 
 }

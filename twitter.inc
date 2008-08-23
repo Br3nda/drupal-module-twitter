@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.4 2008/08/22 03:57:11 eaton Exp $
+// $Id: twitter.inc,v 1.5 2008/08/23 04:27:40 eaton Exp $
 
 /**
  * @file
@@ -300,7 +300,6 @@ function _twitter_request_failure($results) {
       // Probably a bogus username.
       watchdog('twitter', 'Twitter account could not be retrieved.');
       return TRUE;
-
   }
   return FALSE;
 }
