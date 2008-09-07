@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.8 2008/09/07 02:55:58 eaton Exp $
+// $Id: twitter.module,v 1.9 2008/09/07 23:59:31 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -169,7 +169,7 @@ function twitter_filter($op, $delta = 0, $format = -1, $text = '') {
         case 0:
           return twitter_link_filter($text);
         case 1:
-          return twitter_link_filter($text, '#', 'http://hashtags.org/tag/');
+          return twitter_link_filter($text, '#', 'http://search.twitter.com/search?q=%23');
         default:
           return $text;
       }
@@ -189,7 +189,7 @@ function twitter_filter_tips($delta, $format, $long = FALSE) {
       return t('Twitter-style @usersnames are linked to their Twitter account pages.');
 
     case 1:
-      return t('Twitter-style #hashtags are linked to !url.', array('!url' => '<a href="http://hashtags.org">hashtags.org</a>'));
+      return t('Twitter-style #hashtags are linked to !url.', array('!url' => '<a href="http://search.twitter.com/">search.twitter.com</a>'));
   }
 }
 
