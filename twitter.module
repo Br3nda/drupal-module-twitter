@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.1 2008/07/09 01:02:05 eaton Exp $
+// $Id: twitter.module,v 1.3.2.2 2008/09/25 15:50:25 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -81,7 +81,7 @@ function twitter_nodeapi(&$node, $op, $a1) {
     case 'insert':
     case 'update':
       if (!empty($node->status) && !empty($node->twitter) && !empty($node->twitter['post'])) {
-        $twitter_accounts = twitter_get_user_accounts($node->uid);
+        $twitter_accounts = twitter_get_user_accounts($node->uid, TRUE);
         $replacements = array('!title' => $node->title,
                               '!url' => url('node/'. $node->nid, array('absolute' => TRUE)),
                               '!user' => $node->name);
@@ -116,8 +116,9 @@ function twitter_cron() {
 
   $results = db_query_range($sql, 0, 20);
   while ($account = db_fetch_array($results)) {
-    // Use the 'cheaper' unauthenticated version if the account isn't protected.
-    if (empty($account['protected'])) {
+    // Use the 'cheaper' unauthenticated version if the account isn't protected,
+    // or if a password hasn't been specified.
+    if (empty($account['protected']) || empty($account['password'])) {
       $statuses = twitter_fetch_timeline($account['screen_name']);
     }
     else {
@@ -138,4 +139,82 @@ function twitter_cron() {
   if ($age = variable_get('twitter_expire', 0)) {
     db_query('DELETE FROM {twitter} WHERE created_time < %d', time() - $age);
   }
+}
+
+
+/**
+ * Implementation of hook_filter().
+ * - Twitter @username converter:
+ *     .Converts Twitter-style @usernames into links to Twitter account pages.
+ * - Twitter #hashtag converter:
+ *     .Converts Twitter-style #hashtags into links to hashtags.org.
+ */
+function twitter_filter($op, $delta = 0, $format = -1, $text = '') {
+  switch ($op) {
+    case 'list':
+      return array(0 => t('Twitter @username converter'), 1 => t('Twitter #hashtag converter'));
+
+    case 'description':
+      switch ($delta) {
+        case 0:
+          return t('Converts Twitter-style @usernames into links to Twitter account pages.');
+        case 1:
+          return t('Converts Twitter-style #hashtags into links to hashtags.org.');
+        default:
+          return;
+      }
+
+    case 'process':
+      switch ($delta) {
+        case 0:
+          return twitter_link_filter($text);
+        case 1:
+          return twitter_link_filter($text, '#', 'http://search.twitter.com/search?q=%23');
+        default:
+          return $text;
+      }
+
+    default:
+      return $text;
+  }
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ */
+function twitter_filter_tips($delta, $format, $long = FALSE) {
+  global $base_url;
+  switch ($delta) {
+    case 0:
+      return t('Twitter-style @usersnames are linked to their Twitter account pages.');
+
+    case 1:
+      return t('Twitter-style #hashtags are linked to !url.', array('!url' => '<a href="http://search.twitter.com/">search.twitter.com</a>'));
+  }
+}
+
+/**
+ * This helper function converts Twitter-style @usernames and #hashtags into 
+ * actual links.
+ */
+function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitter.com/') {
+  $matches = array(
+    '/^' . $prefix . '([a-z0-9_]{0,15})/i',
+    '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i',
+    '/\>' . $prefix . '([a-z0-9_]{0,15})/i'
+  );
+  $replacements = array(
+    '<a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
+    '${1}<a href="' . $destination . '${2}">' . $prefix . '${2}</a>',
+    '><a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
+  );
+  return preg_replace($matches, $replacements, $text); 
+}
+
+/**
+ * Implementation of hook_views_api.
+ * Notifies the Views module that we're compatible with a particular API revision.
+ */
+function twitter_views_api() {
+  return array('api' => 2);
 }

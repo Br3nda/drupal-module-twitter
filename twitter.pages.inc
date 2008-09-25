@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.1 2008/09/25 15:50:25 eaton Exp $
 
 /**
  *
@@ -178,8 +178,8 @@ function twitter_add_account($form_state, $account = NULL) {
   );
   $form['password'] = array(
     '#type' => 'password',
-    '#required' => TRUE,
     '#title' => t('Password'),
+    '#description' => t("If your Twitter account is protected, or you wish to post to Twitter from Drupal, you must enter the Twitter account's password.")
   );
 
   $form['import'] = array(

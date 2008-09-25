@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.1 2008/07/09 01:02:05 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.2 2008/09/25 15:50:25 eaton Exp $
 
 /**
  * @file
@@ -26,7 +26,7 @@ function twitter_form($account = NULL) {
     $account = $user;
   }
 
-  $twitter_accounts = drupal_map_assoc(array_keys(twitter_get_user_accounts($account->uid)));
+  $twitter_accounts = drupal_map_assoc(array_keys(twitter_get_user_accounts($account->uid, TRUE)));
   if (count($twitter_accounts)) {
     $form = array();
     $form['status'] = array(
@@ -121,13 +121,14 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
  *   The text to post. Strings longer than 140 characters will be truncated by
  *   Twitter.
  * @param $source
- *   A string indicating the program or site used to post the message. This is
- *   not cleanly supported yet by Twitter, and should probably be ignored.
+ *   A string indicating the program or site used to post the message. Source
+ *   strings should be registered with Twitter, as unrecgonized sources are
+ *   ignored.
  * @return
  *   The full results of the Drupal HTTP request, including the HTTP response
  *   code returned by Twitter.com.
  */
-function twitter_set_status($screen_name, $password, $text, $source = NULL) {
+function twitter_set_status($screen_name, $password, $text, $source = 'drupal') {
   $url = "http://twitter.com/statuses/update.xml";
 
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
@@ -301,7 +302,6 @@ function _twitter_request_failure($results) {
       // Probably a bogus username.
       watchdog('twitter', 'Twitter account could not be retrieved.');
       return TRUE;
-
   }
   return FALSE;
 }
@@ -375,8 +375,11 @@ function twitter_cache_status($status = array(), $silent = FALSE) {
  * User/account relationship code
  */
 
-function twitter_get_user_accounts($uid) {
+function twitter_get_user_accounts($uid, $only_with_passwords = FALSE) {
   $sql = "SELECT ta.*, tu.uid, tu.password, tu.import FROM {twitter_user} tu LEFT JOIN {twitter_account} ta ON (tu.screen_name = ta.screen_name) WHERE tu.uid = %d";
+  if ($only_with_passwords) {
+    $sql .= " AND tu.password IS NULL";
+  }
   $args = array($uid);
   $results = db_query($sql, $args);
 
@@ -394,19 +397,23 @@ function twitter_user_save($account = array(), $force_import = FALSE) {
   );
 
   if (db_result(db_query("SELECT 1 FROM {twitter_user} WHERE uid = %d AND screen_name = '%s'", $account['uid'], $account['screen_name']))) {
-    drupal_write_record('twitter_user', $account, array('uid', 'screen_name'));
-  }
+    drupal_write_record('twitter_user', $account, array('uid', 'screen_name'));  }
   else {
     drupal_write_record('twitter_user', $account);
   }
 
   if ($force_import && $account['import']) {
-    $temp = twitter_fetch_account_info($account['screen_name'], $account['password']);
-    if (empty($account['protected'])) {
+    if (empty($account['protected']) || empty($account['password'])) {
       $statuses = twitter_fetch_timeline($account['screen_name']);
     }
     else {
+      twitter_fetch_account_info($account['screen_name'], $account['password']);
       $statuses = twitter_fetch_statuses($account['screen_name'], $account['password']);
+    }
+    
+    if (!empty($statuses)) {
+      twitter_cache_account($statuses[0]['account']);
+      twitter_touch_account($account['screen_name']);
     }
   }
 }

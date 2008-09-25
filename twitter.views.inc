@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views.inc,v 1.1 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.views.inc,v 1.1.2.1 2008/09/25 15:50:25 eaton Exp $
 /**
  * @file
  * Provide views data and handlers for twitter.module
@@ -11,6 +11,25 @@
  * Includes the ability to create views of just the twitter table.
  * @{
  */
+
+/**
+ * Implementation of hook_views_handlers()
+ */
+function twitter_views_handlers() {
+  return array(
+    'handlers' => array(
+      'twitter_views_handler_field_profile_image' => array(
+        'parent' => 'views_handler_field',
+        'file' => 'twitter_views_field_handlers.inc',
+      ),
+      'twitter_views_handler_field_xss' => array(
+        'parent' => 'views_handler_field',
+        'file' => 'twitter_views_field_handlers.inc',
+      ),
+    ),
+  );
+}
+
 
 /**
  * Implementation of hook_views_data()
@@ -68,7 +87,7 @@ function twitter_views_data() {
     'title' => t('Message text'),
     'help' => t('The text of the Twitter message.'),
     'field' => array(
-      'handler' => 'views_handler_field_xss',
+      'handler' => 'twitter_views_handler_field_xss',
       'click sortable' => TRUE,
     ),
     'filter' => array(
@@ -201,7 +220,7 @@ function twitter_views_data() {
     'title' => t('Profile image'),
     'help' => t('The image used by the Twitter account.'),
     'field' => array(
-      'handler' => 'twitter_views_handler_profile_image',
+      'handler' => 'twitter_views_handler_field_profile_image',
       'click sortable' => TRUE,
     ),
   );
@@ -322,18 +341,6 @@ function twitter_views_data_alter(&$data) {
     'field' => 'uid',
   );
 }
-
-
-/**
- * Field handler to provide simple renderer that turns a URL into a clickable link.
- */
-class twitter_views_handler_profile_image extends views_handler_field {
-  function render($values) {
-    $value = $values->{$this->field_alias};
-    return theme('image', $value, '', '', array(), FALSE);
-  }
-}
-
 
 /**
  * @}
