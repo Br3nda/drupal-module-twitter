@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.7 2008/09/07 02:55:58 eaton Exp $
+// $Id: twitter.inc,v 1.8 2008/09/25 15:45:51 eaton Exp $
 
 /**
  * @file
@@ -121,13 +121,14 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
  *   The text to post. Strings longer than 140 characters will be truncated by
  *   Twitter.
  * @param $source
- *   A string indicating the program or site used to post the message. This is
- *   not cleanly supported yet by Twitter, and should probably be ignored.
+ *   A string indicating the program or site used to post the message. Source
+ *   strings should be registered with Twitter, as unrecgonized sources are
+ *   ignored.
  * @return
  *   The full results of the Drupal HTTP request, including the HTTP response
  *   code returned by Twitter.com.
  */
-function twitter_set_status($screen_name, $password, $text, $source = NULL) {
+function twitter_set_status($screen_name, $password, $text, $source = 'drupal') {
   $url = "http://twitter.com/statuses/update.xml";
 
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
