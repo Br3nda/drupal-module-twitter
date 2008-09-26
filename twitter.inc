@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.2 2008/09/25 15:50:25 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.3 2008/09/26 15:32:48 eaton Exp $
 
 /**
  * @file
@@ -135,7 +135,7 @@ function twitter_set_status($screen_name, $password, $text, $source = 'drupal') 
                    'Content-type' => 'application/x-www-form-urlencoded');
   $data = 'status='. urlencode($text);
   if (!empty($source)) {
-    $data .= 'source='. urlencode($source);
+    $data .= "&source=". urlencode($source);
   }
 
   return drupal_http_request($url, $headers, 'POST', $data);
