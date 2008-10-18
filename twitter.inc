@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.4 2008/09/26 15:59:21 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.5 2008/10/18 02:33:57 eaton Exp $
 
 /**
  * @file
@@ -291,18 +291,38 @@ function twitter_authenticate($screen_name, $password) {
 function _twitter_request_failure($results) {
   switch ($results->code) {
     case '304':
-      // Not modified, nothing to do.
+      // 304 Not Modified: there was no new data to return.
+      return TRUE;
+    case 400:
+      // 400 Bad Request: your request is invalid, and we'll return an error message that tells you why. This is the status code returned if you've exceeded the rate limit
+      watchdog('twitter', '400 Bad Request.');
       return TRUE;
     case 401:
+      // 401 Not Authorized: either you need to provide authentication credentials, or the credentials provided aren't valid.
+      watchdog('twitter', '401 Not Authorized.');
+      return TRUE;
     case 403:
-      // Twitter returns both of these for different classes of auth failure.
-      watchdog('twitter', 'Twitter account could not be authenticated.');
+      // 403 Forbidden: we understand your request, but are refusing to fulfill it.  An accompanying error message should explain why.
+      watchdog('twitter', '403 Forbidden.');
       return TRUE;
     case 404:
-      // Probably a bogus username.
-      watchdog('twitter', 'Twitter account could not be retrieved.');
+      // 404 Not Found: either you're requesting an invalid URI or the resource in question doesn't exist (ex: no such user). 
+      watchdog('twitter', '404 Not Found.');
+      return TRUE;
+    case 500:
+      // 500 Internal Server Error: we did something wrong.  Please post to the group about it and the Twitter team will investigate.
+      watchdog('twitter', '500 Internal Server Error.');
+      return TRUE;
+    case 502:
+      // 502 Bad Gateway: returned if Twitter is down or being upgraded.
+      watchdog('twitter', '502 Bad Gateway.');
+      return TRUE;
+    case 503:
+      // 503 Service Unavailable: the Twitter servers are up, but are overloaded with requests.  Try again later.
+      watchdog('twitter', '503 Service Unavailable.');
       return TRUE;
   }
+  // 200 OK: everything went awesome.
   return FALSE;
 }
 
