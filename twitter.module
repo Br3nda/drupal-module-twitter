@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.2 2008/09/25 15:50:25 eaton Exp $
+// $Id: twitter.module,v 1.3.2.3 2009/01/17 20:06:58 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -69,7 +69,7 @@ function twitter_form_alter(&$form, $form_state, $form_id) {
       '#id' => 'twitter-toggle',
     );
     $form['twitter'] += $twitter_form;
-    $form['twitter']['status']['#default_value'] = variable_get('twitter_default_format', 'New post: !title (!url)');
+    $form['twitter']['status']['#default_value'] = variable_get('twitter_default_format', 'New post: !title - !url');
     $form['twitter']['status']['#description'] = t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.');
   }
 }
