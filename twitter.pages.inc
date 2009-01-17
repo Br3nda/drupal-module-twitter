@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.1 2008/09/25 15:50:25 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.2 2009/01/17 20:01:05 eaton Exp $
 
 /**
  *
@@ -47,6 +47,14 @@ function twitter_admin_form() {
     '#maxlength' => 140,
     '#description' => t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.'),
     '#default_value' => variable_get('twitter_default_format', 'New post: !title (!url)'),
+  );
+
+  $form['twitter_api_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Alternate API URL'),
+    '#default_value' => variable_get('twitter_api_url', 'twitter.com'),
+    '#description' => t("A Twitter-compatible microblogging services like !identica can be used insted of Twitter.com by entering the service's API URL here.",
+      array('!identica' => l('Identi.ca', 'http://laconi.ca/trac/wiki/TwitterCompatibleAPI'))),
   );
 
   return system_settings_form($form);

@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.5 2008/10/18 02:33:57 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.6 2009/01/17 20:01:05 eaton Exp $
 
 /**
  * @file
@@ -87,7 +87,7 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
     $since = db_result(db_query($sql, $screen_name));
   }
 
-  $url = "http://twitter.com/statuses/user_timeline/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/user_timeline/$screen_name.xml";
 
   if (!empty($since)) {
     $url .= '?since='. urlencode($since);
@@ -129,7 +129,7 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
  *   code returned by Twitter.com.
  */
 function twitter_set_status($screen_name, $password, $text, $source = 'drupal') {
-  $url = "http://twitter.com/statuses/update.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/update.xml";
 
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
@@ -158,7 +158,7 @@ function twitter_set_status($screen_name, $password, $text, $source = 'drupal') 
  *   An single Twitter account.
  */
 function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
-  $url = "http://twitter.com/users/show/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/users/show/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
@@ -197,7 +197,7 @@ function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
  * @see twitter_fetch_timeline()
  */
 function twitter_fetch_statuses($screen_name, $password, $cache = TRUE) {
-  $url = "http://twitter.com/statuses/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
 
@@ -231,7 +231,7 @@ function twitter_fetch_statuses($screen_name, $password, $cache = TRUE) {
  * @see twitter_fetch_followers()
  */
 function twitter_fetch_friends($screen_name) {
-  $url = "http://twitter.com/statuses/friends/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/friends/$screen_name.xml";
   $results = drupal_http_request($url, array(), 'GET');
   if (_twitter_request_failure($results)) {
     return array();
@@ -256,7 +256,7 @@ function twitter_fetch_friends($screen_name) {
  * @see twitter_fetch_friends()
  */
 function twitter_fetch_followers($screen_name, $password) {
-  $url = "http://twitter.com/statuses/followers/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/followers/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
@@ -277,11 +277,11 @@ function twitter_fetch_followers($screen_name, $password) {
  *   A boolean indicating success or failure.
  */
 function twitter_authenticate($screen_name, $password) {
-  $url = "http://twitter.com/account/verify_credentials.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/account/verify_credentials.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
-  drupal_http_request('http://twitter.com/account/end_session', $headers, 'GET');
+  drupal_http_request('http://' . variable_get('twitter_api_url', 'twitter.com') . '/account/end_session', $headers, 'GET');
   return ($results->code == '200');
 }
 
