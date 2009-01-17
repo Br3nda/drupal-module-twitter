@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.3 2009/01/17 20:06:58 eaton Exp $
+// $Id: twitter.module,v 1.3.2.4 2009/01/17 20:43:53 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -69,11 +69,16 @@ function twitter_form_alter(&$form, $form_state, $form_id) {
       '#id' => 'twitter-toggle',
     );
     $form['twitter'] += $twitter_form;
-    $form['twitter']['status']['#default_value'] = variable_get('twitter_default_format', 'New post: !title - !url');
-    $form['twitter']['status']['#description'] = t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.');
+    $form['twitter']['status']['#default_value'] = variable_get('twitter_default_format', 'New post: !title !tinyurl');
+    $form['twitter']['status']['#description'] = t('The given text will be posted to twitter.com. You can use !url, !url-alias, !tinyurl, !title and !user as replacement text.');
   }
 }
 
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * Intercepts newly published nodes and posts noticed to Twitter.
+ */
 function twitter_nodeapi(&$node, $op, $a1) {
   module_load_include('inc', 'twitter');
 
@@ -83,7 +88,9 @@ function twitter_nodeapi(&$node, $op, $a1) {
       if (!empty($node->status) && !empty($node->twitter) && !empty($node->twitter['post'])) {
         $twitter_accounts = twitter_get_user_accounts($node->uid, TRUE);
         $replacements = array('!title' => $node->title,
-                              '!url' => url('node/'. $node->nid, array('absolute' => TRUE)),
+                              '!url' => url('node/'. $node->nid, array('absolute' => TRUE, 'alias' => TRUE)),
+                              '!url-alias' => url('node/'. $node->nid, array('absolute' => TRUE)),
+                              '!tinyurl' => _twitter_tinyurl(url('node/'. $node->nid, array('absolute' => TRUE))),
                               '!user' => $node->name);
         $status = strtr($node->twitter['status'], $replacements);
         $pass = $twitter_accounts[$node->twitter['account']]['password'];
@@ -91,6 +98,19 @@ function twitter_nodeapi(&$node, $op, $a1) {
         drupal_set_message(t('Successfully posted to Twitter'));
       }
       break;
+  }
+}
+
+/**
+ * Very lightweight helper function to generate a TinyURL for a given post.
+ */
+function _twitter_tinyurl($url) {
+  $response = drupal_http_request("http://tinyurl.com/api-create.php?url=" . $url);
+  if ($response->code == 200) {
+    return $response->data;
+  }
+  else {
+    return $url;
   }
 }
 

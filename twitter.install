@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.install,v 1.2.2.1 2009/01/17 20:43:53 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -148,6 +148,9 @@ function twitter_schema() {
 function twitter_install() {
   // Create tables.
   drupal_install_schema('twitter');
+
+  // Set the weight to 3, making it heaving than Pathauto.
+  db_query("UPDATE {system} SET weight = 3 WHERE name = 'twitter'");
 }
 
 /**
@@ -158,6 +161,10 @@ function twitter_update_6000() {
   twitter_install();
 }
 
+/**
+ * Adding a handful of additional flags on accounts, and saving more metadata
+ * when Twitter sends it to us.
+ */
 function twitter_update_6001() {
   $ret = array();
   $attributes = array(
@@ -182,6 +189,16 @@ function twitter_update_6001() {
   );
   db_add_column($ret, 'twitter_account', 'followers_count', 'int', $attributes);
 
+  return $ret;
+}
+
+/**
+ * Set the weight a little heavier to allow Pathauto and other modules to do
+ * their work on the title, path alias, etc. before the twitter post is sent.
+ */
+function twitter_update_6002() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = 3 WHERE name = 'twitter'");
   return $ret;
 }
 
