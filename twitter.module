@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.4 2009/01/17 20:43:53 eaton Exp $
+// $Id: twitter.module,v 1.3.2.5 2009/02/10 19:33:00 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -90,7 +90,7 @@ function twitter_nodeapi(&$node, $op, $a1) {
         $replacements = array('!title' => $node->title,
                               '!url' => url('node/'. $node->nid, array('absolute' => TRUE, 'alias' => TRUE)),
                               '!url-alias' => url('node/'. $node->nid, array('absolute' => TRUE)),
-                              '!tinyurl' => _twitter_tinyurl(url('node/'. $node->nid, array('absolute' => TRUE))),
+                              '!tinyurl' => twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE))),
                               '!user' => $node->name);
         $status = strtr($node->twitter['status'], $replacements);
         $pass = $twitter_accounts[$node->twitter['account']]['password'];
@@ -104,13 +104,18 @@ function twitter_nodeapi(&$node, $op, $a1) {
 /**
  * Very lightweight helper function to generate a TinyURL for a given post.
  */
-function _twitter_tinyurl($url) {
-  $response = drupal_http_request("http://tinyurl.com/api-create.php?url=" . $url);
-  if ($response->code == 200) {
-    return $response->data;
+function twitter_shorten_url($url) {
+  if (function_exists('custom_twitter_shorten_url')) {
+    return custom_twitter_shorten_url($url);
   }
   else {
-    return $url;
+    $response = drupal_http_request("http://tinyurl.com/api-create.php?url=" . $url);
+    if ($response->code == 200) {
+      return $response->data;
+    }
+    else {
+      return $url;
+    }
   }
 }
 
