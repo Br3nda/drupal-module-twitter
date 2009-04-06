@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.5 2009/02/10 19:33:00 eaton Exp $
+// $Id: twitter.module,v 1.3.2.6 2009/04/06 22:57:37 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -48,9 +48,18 @@ function twitter_theme() {
  * Implementation of hook_form_alter().
  */
 function twitter_form_alter(&$form, $form_state, $form_id) {
-  module_load_include('inc', 'twitter');
+  // Alter any node forms.
+  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id) {
+    // If we haven't enabled Twitter posting on this node type, nothing to do
+    // here.
+    $type = $form['#node']->type;
+    $allowed_types = variable_get('twitter_types', array('story' => 'story', 'blog' => 'blog'));
+    if (empty($allowed_types[$type])) {
+      return;
+    }
 
-  if (substr($form_id, -10) == '_node_form') {
+    module_load_include('inc', 'twitter');
+
     $twitter_form = twitter_form();
     if (!$twitter_form) {
       return;
