@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.7 2009/04/06 23:05:03 eaton Exp $
+// $Id: twitter.module,v 1.3.2.8 2009/04/08 06:40:25 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -250,17 +250,38 @@ function twitter_filter_tips($delta, $format, $long = FALSE) {
  */
 function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitter.com/') {
   $matches = array(
+    '/\>' . $prefix . '([a-z0-9_]{0,15})/i',
     '/^' . $prefix . '([a-z0-9_]{0,15})/i',
     '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i',
-    '/\>' . $prefix . '([a-z0-9_]{0,15})/i'
   );
   $replacements = array(
+    '><a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
     '<a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
     '${1}<a href="' . $destination . '${2}">' . $prefix . '${2}</a>',
-    '><a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
   );
   return preg_replace($matches, $replacements, $text); 
 }
+
+/**
+ * An implementation of hook_twitter_accounts. We want to move this into a
+ * separate module eventually, but sticking the code here and using a hook
+ * lets other modules solve the 'what accounts can a user post with' problem
+ * in cleaner ways.
+ */
+function twitter_twitter_accounts($user, $full_access = FALSE) {
+  $sql = "SELECT ta.*, tu.uid, tu.password, tu.import FROM {twitter_user} tu LEFT JOIN {twitter_account} ta ON (tu.screen_name = ta.screen_name) WHERE tu.uid = %d";
+  if ($full_access) {
+    $sql .= " AND tu.password IS NOT NULL";
+  }
+  $args = array($user->uid);
+  $results = db_query($sql, $args);
+
+  while ($account = db_fetch_array($results)) {
+    $accounts[$account['screen_name']] = $account;
+  }
+  return $accounts;
+}
+
 
 /**
  * Implementation of hook_views_api.
