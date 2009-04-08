@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.7 2009/04/08 06:40:25 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.8 2009/04/08 07:22:41 eaton Exp $
 
 /**
  * @file
@@ -396,8 +396,8 @@ function twitter_cache_status($status = array(), $silent = FALSE) {
  */
 
 function twitter_get_user_accounts($uid, $full_access = FALSE) {
-  $account = user_load($uid);
-  return module_invoke_all('twitter_accounts', $user, $full_access);
+  $drupal_user = user_load($uid);
+  return module_invoke_all('twitter_accounts', $drupal_user, $full_access);
 }
 
 function twitter_user_save($account = array(), $force_import = FALSE) {

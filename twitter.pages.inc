@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.4 2009/01/17 20:43:53 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.5 2009/04/08 07:22:41 eaton Exp $
 
 /**
  *
@@ -64,7 +64,10 @@ function twitter_user_settings($account) {
   module_load_include('inc', 'twitter');
 
   $output = '';
-  $twitter_accounts = twitter_get_user_accounts($account->uid);
+  // This is directly calling a hook implementation, which is bad and naughty,
+  // but oh well. We'll fix this in the next reshuffling when user account
+  // management gets an overhaul.
+  $twitter_accounts = twitter_twitter_accounts($account);
   if (!empty($twitter_accounts)) {
     $output .= drupal_get_form('twitter_account_list_form', $twitter_accounts);
   }
