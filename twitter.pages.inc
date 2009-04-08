@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.6 2009/04/08 07:53:14 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.7 2009/04/08 22:13:35 eaton Exp $
 
 /**
  *
@@ -15,7 +15,6 @@ function twitter_admin_form() {
 
   $form['global_account']['twitter_global_name'] = array(
     '#type' => 'textfield',
-    '#required' => TRUE,
     '#title' => t('Twitter user name'),
     '#default_value' => variable_get('twitter_global_name', NULL),
   );
