@@ -1,11 +1,31 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.5 2009/04/08 07:22:41 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.6 2009/04/08 07:53:14 eaton Exp $
 
 /**
  *
  */
 function twitter_admin_form() {
   $form = array();
+
+  $form['global_account'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Global account'),
+    '#description' => t('A site-wide Twitter account to use as the default when tweets are posted. This is useful for single-user blogs or sites where many users post to a single shared Twitter account.'),
+  );
+
+  $form['global_account']['twitter_global_name'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#title' => t('Twitter user name'),
+    '#default_value' => variable_get('twitter_global_name', NULL),
+  );
+  
+  $form['global_account']['twitter_global_password'] = array(
+    '#type' => 'password',
+    '#title' => t('Password'),
+    '#description' => t("If your Twitter account is protected, or you wish to post to Twitter from Drupal, you must enter the Twitter account's password."),
+    '#default_value' => variable_get('twitter_global_password', NULL),
+  );
 
   $form['import'] = array(
     '#type' => 'fieldset',

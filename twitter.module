@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.9 2009/04/08 07:22:41 eaton Exp $
+// $Id: twitter.module,v 1.3.2.10 2009/04/08 07:53:14 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -34,7 +34,7 @@ function twitter_menu() {
  * Implementation of hook_perm()
  */
 function twitter_perm() {
-  return array('add twitter accounts');
+  return array('add twitter accounts', 'use global twitter account');
 }
 
 /**
@@ -120,8 +120,14 @@ function twitter_nodeapi(&$node, $op, $a1) {
                               '!user' => $node->name);
         $status = strtr($node->twitter['status'], $replacements);
         $pass = $twitter_accounts[$node->twitter['account']]['password'];
-        twitter_set_status($node->twitter['account'], $pass, $status);
-        drupal_set_message(t('Successfully posted to Twitter'));
+        $result = twitter_set_status($node->twitter['account'], $pass, $status);
+        if (_twitter_request_failure($result)) {
+          drupal_set_message(t('An error occurred when posting to twitter: %code %error',
+                               array('%code' => $result->code, '%error' => $result->error)), 'warning');
+        }
+        else {
+          drupal_set_message(t('Successfully posted to Twitter'));
+        }
       }
       break;
   }
@@ -269,6 +275,17 @@ function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitte
  * in cleaner ways.
  */
 function twitter_twitter_accounts($drupal_user, $full_access = FALSE) {
+  $accounts = array();
+  if (user_access('use global twitter account') &&
+      ($name = variable_get('twitter_global_name', NULL)) &&
+      ($pass = variable_get('twitter_global_password', NULL))) {
+    
+    $accounts[$name] = array(
+      'screen_name' => $name,
+      'password' => $pass,
+    );
+  }
+  
   $sql = "SELECT ta.*, tu.uid, tu.password, tu.import FROM {twitter_user} tu LEFT JOIN {twitter_account} ta ON (tu.screen_name = ta.screen_name) WHERE tu.uid = %d";
   if ($full_access) {
     $sql .= " AND tu.password IS NOT NULL";
