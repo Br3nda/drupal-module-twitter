@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views.inc,v 1.1.2.1 2008/09/25 15:50:25 eaton Exp $
+// $Id: twitter.views.inc,v 1.1.2.2 2009/04/08 21:58:47 eaton Exp $
 /**
  * @file
  * Provide views data and handlers for twitter.module
@@ -43,7 +43,7 @@ function twitter_views_data() {
   $data['twitter']['table']['base'] = array(
     'field' => 'twitter_id',
     'title' => t('Twitter message'),
-    'help' => t('Stores Twitter status messages.'),
+    'help' => t('Twitter status messages.'),
     'weight' => 10,
   );
 
@@ -201,7 +201,7 @@ function twitter_views_data() {
 
   // Twitter account description
   $data['twitter_account']['followers_count'] = array(
-    'title' => t('Location'),
+    'title' => t('Followers'),
     'help' => t('The number of users following this Twitter account.'),
     'field' => array(
       'handler' => 'views_handler_field_numeric',
