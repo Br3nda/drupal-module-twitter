@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.11 2009/04/08 18:09:01 eaton Exp $
+// $Id: twitter.module,v 1.3.2.12 2009/04/09 14:34:26 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -121,7 +121,7 @@ function twitter_nodeapi(&$node, $op, $a1) {
                               '!user' => $node->name);
         // Only generate the shortened URL if it's going to be used. No sense
         // burning through TinyURLs without a good reason.
-        if (strstr($status, '!tinyurl') !== FALSE) {
+        if (strstr($node->twitter['status'], '!tinyurl') !== FALSE) {
           $replacements['!tinyurl'] = twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE)));
         }
 
