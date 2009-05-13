@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.3 2009/04/08 07:12:30 eaton Exp $
+// $Id: twitter.install,v 1.2.2.4 2009/05/13 17:27:14 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -11,6 +11,8 @@ function twitter_schema() {
       'twitter_id' => array(
         'description' => t("Unique identifier for each {twitter} post."),
         'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'big',
         'not null' => TRUE
       ),
       'screen_name' => array(
@@ -201,6 +203,22 @@ function twitter_update_6001() {
 function twitter_update_6002() {
   $ret = array();
   $ret[] = update_sql("UPDATE {system} SET weight = 3 WHERE name = 'twitter'");
+  return $ret;
+}
+
+/**
+ * Twitter status IDs are hitting the rollover point for signed ints. Let's
+ * be sure we're ready. See http://bit.ly/kokvi for details.
+ */
+function twitter_update_6003() {
+  $ret = array();
+  db_drop_primary_key($ret, 'twitter');
+  
+  db_change_field($ret, 'twitter', 'twitter_id', 'twitter_id',
+    array('description' => t("Unique identifier for each {twitter} post."),
+          'type' => 'int', 'size' => 'big', 'unsigned' => 'true', 'not null' => TRUE),
+    array('primary key' => array('twitter_id')));
+
   return $ret;
 }
 
