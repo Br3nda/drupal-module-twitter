@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_actions.module,v 1.1.2.1 2008/09/26 15:32:49 eaton Exp $
+// $Id: twitter_actions.module,v 1.1.2.2 2009/05/20 22:27:57 eaton Exp $
 
 /**
  * @file
@@ -73,6 +73,8 @@ function twitter_actions_set_status_action_validate($form, $form_state) {
 
   $pass = $form_state['values']['password'];
   $name = $form_state['values']['screen_name'];
+
+  module_load_include('inc', 'twitter');
 
   $valid = twitter_authenticate($name, $pass);
   if (!$valid) {
