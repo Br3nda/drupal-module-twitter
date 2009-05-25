@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.4 2009/05/13 17:27:14 eaton Exp $
+// $Id: twitter.install,v 1.2.2.5 2009/05/25 19:55:30 walkah Exp $
 
 /**
  * Implementation of hook_schema).
@@ -124,7 +124,9 @@ function twitter_schema() {
       'screen_name' => array(
         'description' => t("The unique login name for the Twitter account."),
         'type' => 'varchar',
-        'length' => 255
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
       ),
       'password' => array(
         'description' => t("The password for the Twitter account."),
@@ -219,6 +221,26 @@ function twitter_update_6003() {
           'type' => 'int', 'size' => 'big', 'unsigned' => 'true', 'not null' => TRUE),
     array('primary key' => array('twitter_id')));
 
+  return $ret;
+}
+
+/**
+ * Add NOT NULL constraint and DEFAULT value to the screen_name field of the 
+ * twitter and twitter_user tables per updated schema definition.
+ *
+ * See http://drupal.org/node/336048 and http://drupal.org/node/430442
+ */
+function twitter_update_6004() {
+  $ret = array();
+  // Have to drop PRIMARY KEY and indexes that use the field being changed.
+  // twitter
+  db_drop_index($ret, 'twitter', 'screen_name');
+  db_change_field($ret, 'twitter', 'screen_name', 'screen_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''), array('indexes' => array('screen_name' => array('screen_name'))));
+
+  // twitter_user
+  db_drop_index($ret, 'twitter_user', 'screen_name');
+  db_drop_primary_key($ret, 'twitter_user');
+  db_change_field($ret, 'twitter_user', 'screen_name', 'screen_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''), array('primary key' => array('uid', 'screen_name'), 'indexes' => array('screen_name' => array('screen_name'))));
   return $ret;
 }
 
