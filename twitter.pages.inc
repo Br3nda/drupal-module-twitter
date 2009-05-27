@@ -1,11 +1,30 @@
 <?php
-// $Id: twitter.pages.inc,v 1.3 2008/08/22 03:57:11 eaton Exp $
+// $Id: twitter.pages.inc,v 1.4 2009/05/27 19:00:07 walkah Exp $
 
 /**
  *
  */
 function twitter_admin_form() {
   $form = array();
+
+  $form['global_account'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Global account'),
+    '#description' => t('A site-wide Twitter account to use as the default when tweets are posted. This is useful for single-user blogs or sites where many users post to a single shared Twitter account.'),
+  );
+
+  $form['global_account']['twitter_global_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Twitter user name'),
+    '#default_value' => variable_get('twitter_global_name', NULL),
+  );
+  
+  $form['global_account']['twitter_global_password'] = array(
+    '#type' => 'password',
+    '#title' => t('Password'),
+    '#description' => t("If your Twitter account is protected, or you wish to post to Twitter from Drupal, you must enter the Twitter account's password."),
+    '#default_value' => variable_get('twitter_global_password', NULL),
+  );
 
   $form['import'] = array(
     '#type' => 'fieldset',
@@ -45,8 +64,16 @@ function twitter_admin_form() {
     '#type' => 'textfield',
     '#title' => t('Default format string'),
     '#maxlength' => 140,
-    '#description' => t('The given text will be posted to twitter.com. You can use !url, !title and !user as replacement text.'),
-    '#default_value' => variable_get('twitter_default_format', 'New post: !title (!url)'),
+    '#description' => t('The given text will be posted to twitter.com. You can use !url, !url-alias, !tinyurl, !title, and !user as replacement text.'),
+    '#default_value' => variable_get('twitter_default_format', 'New post: !title !tinyurl'),
+  );
+
+  $form['twitter_api_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Alternate API URL'),
+    '#default_value' => variable_get('twitter_api_url', 'twitter.com'),
+    '#description' => t("A Twitter-compatible microblogging services like !identica can be used insted of Twitter.com by entering the service's API URL here.",
+      array('!identica' => l('Identi.ca', 'http://laconi.ca/trac/wiki/TwitterCompatibleAPI'))),
   );
 
   return system_settings_form($form);
@@ -56,7 +83,10 @@ function twitter_user_settings($account) {
   module_load_include('inc', 'twitter');
 
   $output = '';
-  $twitter_accounts = twitter_get_user_accounts($account->uid);
+  // This is directly calling a hook implementation, which is bad and naughty,
+  // but oh well. We'll fix this in the next reshuffling when user account
+  // management gets an overhaul.
+  $twitter_accounts = twitter_twitter_accounts($account);
   if (!empty($twitter_accounts)) {
     $output .= drupal_get_form('twitter_account_list_form', $twitter_accounts);
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.8 2008/09/25 15:45:51 eaton Exp $
+// $Id: twitter.inc,v 1.9 2009/05/27 19:00:07 walkah Exp $
 
 /**
  * @file
@@ -87,7 +87,7 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
     $since = db_result(db_query($sql, $screen_name));
   }
 
-  $url = "http://twitter.com/statuses/user_timeline/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/user_timeline/$screen_name.xml";
 
   if (!empty($since)) {
     $url .= '?since='. urlencode($since);
@@ -129,13 +129,13 @@ function twitter_fetch_timeline($screen_name, $filter_since = TRUE, $cache = TRU
  *   code returned by Twitter.com.
  */
 function twitter_set_status($screen_name, $password, $text, $source = 'drupal') {
-  $url = "http://twitter.com/statuses/update.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/update.xml";
 
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $data = 'status='. urlencode($text);
   if (!empty($source)) {
-    $data .= 'source='. urlencode($source);
+    $data .= "&source=". urlencode($source);
   }
 
   return drupal_http_request($url, $headers, 'POST', $data);
@@ -158,7 +158,7 @@ function twitter_set_status($screen_name, $password, $text, $source = 'drupal') 
  *   An single Twitter account.
  */
 function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
-  $url = "http://twitter.com/users/show/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/users/show/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
@@ -197,7 +197,7 @@ function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
  * @see twitter_fetch_timeline()
  */
 function twitter_fetch_statuses($screen_name, $password, $cache = TRUE) {
-  $url = "http://twitter.com/statuses/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
 
@@ -231,7 +231,7 @@ function twitter_fetch_statuses($screen_name, $password, $cache = TRUE) {
  * @see twitter_fetch_followers()
  */
 function twitter_fetch_friends($screen_name) {
-  $url = "http://twitter.com/statuses/friends/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/friends/$screen_name.xml";
   $results = drupal_http_request($url, array(), 'GET');
   if (_twitter_request_failure($results)) {
     return array();
@@ -256,7 +256,7 @@ function twitter_fetch_friends($screen_name) {
  * @see twitter_fetch_friends()
  */
 function twitter_fetch_followers($screen_name, $password) {
-  $url = "http://twitter.com/statuses/followers/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/followers/$screen_name.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
@@ -277,11 +277,11 @@ function twitter_fetch_followers($screen_name, $password) {
  *   A boolean indicating success or failure.
  */
 function twitter_authenticate($screen_name, $password) {
-  $url = "http://twitter.com/account/verify_credentials.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/account/verify_credentials.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
   $results = drupal_http_request($url, $headers, 'GET');
-  drupal_http_request('http://twitter.com/account/end_session', $headers, 'GET');
+  drupal_http_request('http://' . variable_get('twitter_api_url', 'twitter.com') . '/account/end_session', $headers, 'GET');
   return ($results->code == '200');
 }
 
@@ -291,18 +291,38 @@ function twitter_authenticate($screen_name, $password) {
 function _twitter_request_failure($results) {
   switch ($results->code) {
     case '304':
-      // Not modified, nothing to do.
+      // 304 Not Modified: there was no new data to return.
+      return TRUE;
+    case 400:
+      // 400 Bad Request: your request is invalid, and we'll return an error message that tells you why. This is the status code returned if you've exceeded the rate limit
+      watchdog('twitter', '400 Bad Request.');
       return TRUE;
     case 401:
+      // 401 Not Authorized: either you need to provide authentication credentials, or the credentials provided aren't valid.
+      watchdog('twitter', '401 Not Authorized.');
+      return TRUE;
     case 403:
-      // Twitter returns both of these for different classes of auth failure.
-      watchdog('twitter', 'Twitter account could not be authenticated.');
+      // 403 Forbidden: we understand your request, but are refusing to fulfill it.  An accompanying error message should explain why.
+      watchdog('twitter', '403 Forbidden.');
       return TRUE;
     case 404:
-      // Probably a bogus username.
-      watchdog('twitter', 'Twitter account could not be retrieved.');
+      // 404 Not Found: either you're requesting an invalid URI or the resource in question doesn't exist (ex: no such user). 
+      watchdog('twitter', '404 Not Found.');
+      return TRUE;
+    case 500:
+      // 500 Internal Server Error: we did something wrong.  Please post to the group about it and the Twitter team will investigate.
+      watchdog('twitter', '500 Internal Server Error.');
+      return TRUE;
+    case 502:
+      // 502 Bad Gateway: returned if Twitter is down or being upgraded.
+      watchdog('twitter', '502 Bad Gateway.');
+      return TRUE;
+    case 503:
+      // 503 Service Unavailable: the Twitter servers are up, but are overloaded with requests.  Try again later.
+      watchdog('twitter', '503 Service Unavailable.');
       return TRUE;
   }
+  // 200 OK: everything went awesome.
   return FALSE;
 }
 
@@ -375,19 +395,9 @@ function twitter_cache_status($status = array(), $silent = FALSE) {
  * User/account relationship code
  */
 
-function twitter_get_user_accounts($uid, $only_with_passwords = FALSE) {
-  $sql = "SELECT ta.*, tu.uid, tu.password, tu.import FROM {twitter_user} tu LEFT JOIN {twitter_account} ta ON (tu.screen_name = ta.screen_name) WHERE tu.uid = %d";
-  if ($only_with_passwords) {
-    $sql .= " AND tu.password IS NULL";
-  }
-  $args = array($uid);
-  $results = db_query($sql, $args);
-
-  $accounts = array();
-  while ($account = db_fetch_array($results)) {
-    $accounts[$account['screen_name']] = $account;
-  }
-  return $accounts;
+function twitter_get_user_accounts($uid, $full_access = FALSE) {
+  $drupal_user = user_load($uid);
+  return module_invoke_all('twitter_accounts', $drupal_user, $full_access);
 }
 
 function twitter_user_save($account = array(), $force_import = FALSE) {

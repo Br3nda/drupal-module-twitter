@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_actions.module,v 1.1 2008/09/25 15:45:52 eaton Exp $
+// $Id: twitter_actions.module,v 1.2 2009/05/27 19:00:08 walkah Exp $
 
 /**
  * @file
@@ -69,10 +69,13 @@ function twitter_actions_set_status_action_form($context = array()) {
 }
 
 function twitter_actions_set_status_action_validate($form, $form_state) {
+  module_load_include('inc', 'twitter');
   $verify = FALSE;
 
   $pass = $form_state['values']['password'];
   $name = $form_state['values']['screen_name'];
+
+  module_load_include('inc', 'twitter');
 
   $valid = twitter_authenticate($name, $pass);
   if (!$valid) {
@@ -143,9 +146,6 @@ function twitter_actions_set_status_action($object, $context) {
       $node = $object;
   }
 
-  $from = variable_get('site_mail', ini_get('sendmail_from'));
-  $recipient = $context['recipient'];
-
   if (isset($node)) {
     if (!isset($account)) {
       $account = user_load(array('uid' => $node->uid));
@@ -173,5 +173,5 @@ function twitter_actions_set_status_action($object, $context) {
   $message = strtr($context['message'], $variables);
 
   module_load_include('inc', 'twitter');
-  twitter_set_status($user_name, $password, $message);
+  twitter_set_status($context['screen_name'], $context['password'], $message);
 }
