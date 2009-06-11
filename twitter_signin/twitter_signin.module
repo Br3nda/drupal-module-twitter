@@ -1,0 +1,107 @@
+<?php
+// $Id: twitter_signin.module,v 1.2 2009/06/11 03:01:02 walkah Exp $
+
+function twitter_signin_menu() {
+  $items = array();
+
+  $items['admin/settings/twitter/signin'] = array(
+    'title' => 'Twitter Signin Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_signin_admin_settings'),
+    'file' => 'twitter_signin.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function twitter_signin_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $block[0]['info'] = t('Sign in with Twitter');
+      return $block;
+    case 'view':
+      $block['subject'] = t('Sign in with Twitter');
+      $block['content'] = drupal_get_form('twitter_signin_form');
+      return $block;
+  }
+}
+
+/**
+ * Main form for twitter signin
+ */
+function twitter_signin_form(&$form_state) {
+  $form = array();
+
+  $form['signin'] = array(
+    '#type' => 'image_button',
+    '#src' => drupal_get_path('module', 'twitter_signin') .'/images/Sign-in-with-Twitter-lighter-small.png',
+    
+  );
+  
+  return $form;
+}
+
+/**
+ * Submit handler for twitter signin
+ */
+function twitter_signin_form_validate(&$form, &$form_state) {
+  module_load_include('lib.php', 'oauth');
+  module_load_include('lib.php', 'twitter');
+  module_load_include('inc', 'twitter');
+
+  $token = $_SESSION['twitter_oauth'];
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  $twitter = new TwitterOAuth($key, $secret);
+  $token = $twitter->get_request_token();
+
+  $_SESSION['twitter_oauth']['token'] = $token;
+  $_SESSION['twitter_oauth']['destination'] = $_GET['q'];
+  $_SESSION['twitter_oauth']['signin'] = TRUE;
+  drupal_goto($twitter->get_authenticate_url($token));
+}
+
+function twitter_signin_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'twitter_oauth_callback' && $_SESSION['twitter_oauth']['signin']) {
+    $submit = $form['#submit'];
+    $form['#submit'] = array('twitter_signin_oauth_callback_submit');
+    $form['#submit'] += $submit;
+  }
+}
+
+function twitter_signin_oauth_callback_submit(&$form, &$form_state) {
+  global $user;
+
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  $response = $form_state['twitter_oauth']['response'];
+
+  $account = user_external_load($response['user_id']);
+  if (isset($account->uid)) {
+    user_external_login($account, $response);
+  }
+  elseif ($uid = db_result(db_query("SELECT uid FROM {twitter_account} WHERE twitter_uid= %d", $response['user_id']))) {
+    // We have an existing twitter account - set it up for login
+    $account = user_load($uid);
+    $edit["authname_twitter"] = $response['user_id'];
+    user_save($account, $edit);
+    $user = $account;
+  }
+  else {
+    $edit = array(
+      'name' => $response['screen_name'],
+      'pass' => user_password(),
+      'init' => $response['screen_name'],
+      'status' => 1,
+      "authname_twitter" => $response['user_id'],
+      'access' => time(),
+    );
+    $account = user_save('', $edit);
+    $user = $account;
+  }
+
+}
