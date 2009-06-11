@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.1 2009/05/28 06:45:21 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.2 2009/06/11 02:50:07 walkah Exp $
 
 /**
  *
@@ -265,29 +265,57 @@ function twitter_account_oauth_validate($form, &$form_state) {
   $twitter = new TwitterOAuth($key, $secret);
   $token = $twitter->get_request_token();
 
-  $_SESSION['twitter_oauth'] = $token;
+  $_SESSION['twitter_oauth']['token'] = $token;
   $_SESSION['twitter_oauth']['destination'] = $_GET['q'];
   drupal_goto($twitter->get_authorize_url($token));
 }
 
 
-function twitter_oauth_callback() {
+function twitter_oauth_callback(&$form_state) {
+  $form['#post']['oauth_token'] = $_GET['oauth_token'];
+
+  $form['oauth_token'] = array(
+    '#type' => 'hidden',
+    '#default_value' => $_GET['oauth_token'],
+  );
+  
+  return $form;
+}
+
+function twitter_oauth_callback_validate($form, &$form_state) {
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+
+  $form_state['twitter_oauth'] = $_SESSION['twitter_oauth'];
+  unset($_SESSION['twitter_oauth']);
+
+  $token = $form_state['twitter_oauth']['token'];
+  if (!is_array($token) || !$key || !$secret) {
+    form_set_error('oauth_token', t('Invalid Twitter OAuth request'));
+  }
+
+  if ($token['oauth_token'] != $form_state['values']['oauth_token']) {
+    form_set_error('oauth_token', t('Invalid OAuth token.'));
+  }
+
   module_load_include('lib.php', 'oauth');
   module_load_include('lib.php', 'twitter');
   module_load_include('inc', 'twitter');
 
-  $token = $_SESSION['twitter_oauth'];
-  $key = variable_get('twitter_consumer_key', '');
-  $secret = variable_get('twitter_consumer_secret', '');
-  
   $twitter = new TwitterOAuth($key, $secret, $token['oauth_token'], $token['oauth_token_secret']);  
   $response = $twitter->get_access_token();
+  $form_state['twitter_oauth']['response'] = $response;
+}
 
+function twitter_oauth_callback_submit(&$form, &$form_state) {
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  $response = $form_state['twitter_oauth']['response'];
+  
+  $twitter = new TwitterOAuth($key, $secret, $response['oauth_token'], $response['oauth_token_secret']);  
   $account = $twitter->users_show($response['screen_name']);
   $account->set_auth($response);
   twitter_account_save($account, TRUE);
-  
-  $destination = $_SESSION['twitter_oauth']['destination'];
-  unset($_SESSION['twitter_oauth']);
-  drupal_goto($destination);
+  $form_state['redirect'] = $form_state['twitter_oauth']['destination'];
+  $form['#programmed'] = FALSE;
 }

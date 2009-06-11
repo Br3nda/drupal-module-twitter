@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.10.2.1 2009/05/28 06:45:21 walkah Exp $
+// $Id: twitter.module,v 1.10.2.2 2009/06/11 02:50:07 walkah Exp $
 
 /**
  * Implementation of hook_meu()
@@ -8,9 +8,10 @@ function twitter_menu() {
   $items = array();
 
   $items['twitter/oauth'] = array(
-    'title' => 'Twitter OAuth Callback',
+    'title' => 'Twitter',
     'access callback' => TRUE,
-    'page callback' => 'twitter_oauth_callback',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_oauth_callback'),
     'type' => MENU_CALLBACK,
     'file' => 'twitter.pages.inc',
   );

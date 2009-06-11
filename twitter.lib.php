@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.lib.php,v 1.1.2.2 2009/06/08 02:49:51 walkah Exp $
+// $Id: twitter.lib.php,v 1.1.2.3 2009/06/11 02:50:07 walkah Exp $
 
 /**
  * @file
@@ -233,10 +233,10 @@ class Twitter {
       return $response->data;
     }
     else {
-      $response = $this->parse_response($response->data);
-      $error = $response['error'];
-      if (!$error) {
-        $error = $response->error;
+      $error = $response->error;
+      $data = $this->parse_response($response->data);
+      if ($data['error']) {
+        $error = $data['error'];
       }
       throw new TwitterException($error);
     }
@@ -287,7 +287,11 @@ class TwitterOAuth extends Twitter {
 
   public function get_request_token() {
     $url = $this->create_url('oauth/request_token', '');
-    $response = $this->auth_request($url);
+    try {
+      $response = $this->auth_request($url);
+    }
+    catch (TwitterException $e) {
+    }
     parse_str($response, $token);
     $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
     return $token;
@@ -300,9 +304,20 @@ class TwitterOAuth extends Twitter {
     return $url;
   }
 
+  public function get_authenticate_url($token) {
+    $url = $this->create_url('oauth/authenticate', '');
+    $url.= '?oauth_token=' . $token['oauth_token'];
+    
+    return $url;
+  }
+
   public function get_access_token() {
     $url = $this->create_url('oauth/access_token', '');
-    $response = $this->auth_request($url);
+    try {
+      $response = $this->auth_request($url);
+    }
+    catch (TwitterException $e) {
+    }
     parse_str($response, $token);
     $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
     return $token;
