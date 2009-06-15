@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views.inc,v 1.1.2.2 2009/04/08 21:58:47 eaton Exp $
+// $Id: twitter.views.inc,v 1.1.2.3 2009/06/15 21:56:30 eaton Exp $
 /**
  * @file
  * Provide views data and handlers for twitter.module
@@ -63,6 +63,16 @@ function twitter_views_data() {
     ),
     'argument' => array(
       'handler' => 'views_handler_argument_string',
+    ),
+  );
+
+  // Twitter status id
+  $data['twitter']['twitter_id'] = array(
+    'title' => t('Status ID'),
+    'help' => t('The ID of the Twitter status message.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => FALSE,
     ),
   );
 

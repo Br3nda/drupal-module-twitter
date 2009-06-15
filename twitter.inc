@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.8 2009/04/08 07:22:41 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.9 2009/06/15 21:56:30 eaton Exp $
 
 /**
  * @file
@@ -197,7 +197,7 @@ function twitter_fetch_account_info($screen_name, $password, $cache = TRUE) {
  * @see twitter_fetch_timeline()
  */
 function twitter_fetch_statuses($screen_name, $password, $cache = TRUE) {
-  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/$screen_name.xml";
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/statuses/user_timeline.xml";
   $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
                    'Content-type' => 'application/x-www-form-urlencoded');
 
@@ -381,7 +381,7 @@ function twitter_touch_account($screen_name = '') {
  * @see twitter_cache_status()
  */
 function twitter_cache_status($status = array(), $silent = FALSE) {
-  db_query("DELETE FROM {twitter} WHERE twitter_id = %d", $status['twitter_id']);
+  db_query("DELETE FROM {twitter} WHERE twitter_id = '%s'", $status['twitter_id']);
   drupal_write_record('twitter', $status);
   if (!$silent) {
     module_invoke_all('twitter_status_update', $status);

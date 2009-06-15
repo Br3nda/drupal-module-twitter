@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.5 2009/05/25 19:55:30 walkah Exp $
+// $Id: twitter.install,v 1.2.2.6 2009/06/15 21:56:30 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -10,10 +10,10 @@ function twitter_schema() {
     'fields' => array(
       'twitter_id' => array(
         'description' => t("Unique identifier for each {twitter} post."),
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'size' => 'big',
-        'not null' => TRUE
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''
       ),
       'screen_name' => array(
         'description' => t("Screen name of the {twitter} user."),
@@ -241,6 +241,35 @@ function twitter_update_6004() {
   db_drop_index($ret, 'twitter_user', 'screen_name');
   db_drop_primary_key($ret, 'twitter_user');
   db_change_field($ret, 'twitter_user', 'screen_name', 'screen_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''), array('primary key' => array('uid', 'screen_name'), 'indexes' => array('screen_name' => array('screen_name'))));
+  return $ret;
+}
+
+/**
+ * Dear PHP, I hate you so bad. Love, Jeff.
+ *
+ * Workaround for drupal_write_record(), which treats a DB bigint as a signed 32
+ * bit int on 32 bit PHP builds. We can STORE bigints, and PHP automatically
+ * converts them to floats in memory while we work with them, but db_placeholders()
+ * always treats them as %d and casts them back to dumb signed ints.
+ *
+ * See http://drupal.org/node/333788 for more info.
+ *
+ * Instead we'll set the column type to 'string' which is a little like jumping
+ * off the Sears Tower because the elevator's broken. But that's life.
+ */
+function twitter_update_6005() {
+  $ret = array();
+
+  // First clear out any borked statuses.
+  $ret[] = update_sql("DELETE FROM {twitter} WHERE twitter_id = 2147483647");
+
+  db_drop_primary_key($ret, 'twitter');
+  
+  db_change_field($ret, 'twitter', 'twitter_id', 'twitter_id',
+    array('description' => t("Unique identifier for each {twitter} post."),
+          'type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
+    array('primary key' => array('twitter_id')));
+  
   return $ret;
 }
 
