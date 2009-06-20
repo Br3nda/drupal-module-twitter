@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views_default.inc,v 1.1 2008/06/18 03:34:33 eaton Exp $
+// $Id: twitter.views_default.inc,v 1.1.2.1 2009/06/20 16:29:14 eaton Exp $
 
 function twitter_views_default_views() {
   $view = new view;
@@ -8,7 +8,7 @@ function twitter_views_default_views() {
   $view->tag = '';
   $view->view_php = '';
   $view->base_table = 'twitter';
-  $view->is_cacheable = '0';
+  $view->is_cacheable = FALSE;
   $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Tweets', 'default');
@@ -104,6 +104,9 @@ function twitter_views_default_views() {
     'role' => array(),
     'perm' => '',
   ));
+  $handler->override_option('cache', array(
+    'type' => 'none',
+  ));
   $handler->override_option('use_pager', 'mini');
   $handler->override_option('style_plugin', 'table');
   $handler->override_option('style_options', array(
@@ -132,19 +135,22 @@ function twitter_views_default_views() {
     ),
     'default' => '-1',
   ));
-  $handler = $view->new_display('page', 'Page', 'page');
+  $handler = $view->new_display('page', 'User page', 'page');
   $handler->override_option('path', 'user/%/tweets');
   $handler->override_option('menu', array(
     'type' => 'tab',
     'title' => 'Twitter',
+    'description' => '',
     'weight' => '1',
+    'name' => 'navigation',
   ));
   $handler->override_option('tab_options', array(
     'type' => 'none',
     'title' => '',
+    'description' => '',
     'weight' => 0,
   ));
-  $handler = $view->new_display('block', 'Block', 'block');
+  $handler = $view->new_display('block', 'User block', 'block');
   $handler->override_option('fields', array(
     'text' => array(
       'label' => '',
@@ -176,6 +182,41 @@ function twitter_views_default_views() {
     'separator' => ' &#8212; ',
   ));
   $handler->override_option('block_description', 'User Tweets');
+  $handler->override_option('block_caching', -1);
+  $handler = $view->new_display('block', 'Global block', 'block2');
+  $handler->override_option('fields', array(
+    'text' => array(
+      'label' => '',
+      'exclude' => 0,
+      'id' => 'text',
+      'table' => 'twitter',
+      'field' => 'text',
+      'relationship' => 'none',
+    ),
+    'created_time' => array(
+      'label' => '',
+      'date_format' => 'time ago',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'created_time',
+      'table' => 'twitter',
+      'field' => 'created_time',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array());
+  $handler->override_option('items_per_page', 5);
+  $handler->override_option('use_more', 1);
+  $handler->override_option('style_plugin', 'list');
+  $handler->override_option('row_options', array(
+    'inline' => array(
+      'text' => 'text',
+      'created_time' => 'created_time',
+    ),
+    'separator' => ' &#8212; ',
+  ));
+  $handler->override_option('block_description', 'All Tweets');
+  $handler->override_option('block_caching', -1);
 
   return array('tweets' => $view);
 }
