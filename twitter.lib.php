@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.lib.php,v 1.1.2.3 2009/06/11 02:50:07 walkah Exp $
+// $Id: twitter.lib.php,v 1.1.2.4 2009/06/20 03:45:26 walkah Exp $
 
 /**
  * @file
@@ -404,14 +404,42 @@ class TwitterUser {
 
   public $description;
 
-  public $profile_image_url;
+  public $followers_count;
+
+  public $friends_count;
+
+  public $statuses_count;
+
+  public $favourites_count;
 
   public $url;
 
-  public $followers_count;
-  
   public $protected;
 
+  public $profile_image_url;
+
+  public $profile_background_color;
+
+  public $profile_text_color;
+
+  public $profile_link_color;
+
+  public $profile_sidebar_fill_color;
+  
+  public $profile_sidebar_border_color;
+
+  public $profile_background_image_url;
+  
+  public $profile_background_tile;
+
+  public $verified;
+
+  public $created_at;
+
+  public $created_time;
+
+  public $utc_offset;
+  
   public $status;
   
   protected $password;
@@ -426,10 +454,27 @@ class TwitterUser {
     $this->name = $values['name'];
     $this->location = $values['location'];
     $this->description = $values['description'];
-    $this->profile_image_url = $values['profile_image_url'];
     $this->url = $values['url'];
     $this->followers_count = $values['followers_count'];
+    $this->friends_count = $values['friends_count'];
+    $this->statuses_count = $values['statuses_count'];
+    $this->favourites_count = $values['favourites_count'];
     $this->protected = $values['protected'];
+    $this->profile_image_url = $values['profile_image_url'];
+    $this->profile_background_color = $values['profile_background_color'];
+    $this->profile_text_color = $values['profile_text_color'];
+    $this->profile_link_color = $values['profile_link_color'];
+    $this->profile_sidebar_fill_color = $values['profile_sidebar_fill_color'];
+    $this->profile_sidebar_border_color = $values['profile_sidebar_border_color'];
+    $this->profile_background_image_url = $values['profile_background_image_url'];
+    $this->profile_background_tile = $values['profile_background_tile'];
+    $this->verified = $values['verified'];
+    $this->created_at = $values['created_at'];
+    if ($values['created_at'] && $created_time = strtotime($values['created_at'])) {
+      $this->created_time = $created_time;
+    }
+    $this->utc_offset = $values['utc_offset'];
+    
     if ($values['status']) {
       $this->status = new TwitterStatus($values['status']);
     }
