@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.views_default.inc,v 1.1.2.1 2009/06/20 16:29:14 eaton Exp $
+// $Id: twitter.views_default.inc,v 1.1.2.2 2009/07/02 14:08:39 eaton Exp $
 
 function twitter_views_default_views() {
   $view = new view;
@@ -13,14 +13,6 @@ function twitter_views_default_views() {
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Tweets', 'default');
   $handler->override_option('fields', array(
-    'profile_image_url' => array(
-      'label' => '',
-      'exclude' => 0,
-      'id' => 'profile_image_url',
-      'table' => 'twitter_account',
-      'field' => 'profile_image_url',
-      'relationship' => 'none',
-    ),
     'text' => array(
       'label' => '',
       'exclude' => 0,
@@ -136,6 +128,54 @@ function twitter_views_default_views() {
     'default' => '-1',
   ));
   $handler = $view->new_display('page', 'User page', 'page');
+  $handler->override_option('fields', array(
+    'profile_image_url' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'strip_tags' => 0,
+        'html' => 0,
+      ),
+      'exclude' => 0,
+      'id' => 'profile_image_url',
+      'table' => 'twitter_account',
+      'field' => 'profile_image_url',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'text' => array(
+      'label' => '',
+      'exclude' => 0,
+      'id' => 'text',
+      'table' => 'twitter',
+      'field' => 'text',
+      'relationship' => 'none',
+    ),
+    'created_time' => array(
+      'label' => '',
+      'date_format' => 'time ago',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'created_time',
+      'table' => 'twitter',
+      'field' => 'created_time',
+      'relationship' => 'none',
+    ),
+  ));
   $handler->override_option('path', 'user/%/tweets');
   $handler->override_option('menu', array(
     'type' => 'tab',
@@ -151,26 +191,6 @@ function twitter_views_default_views() {
     'weight' => 0,
   ));
   $handler = $view->new_display('block', 'User block', 'block');
-  $handler->override_option('fields', array(
-    'text' => array(
-      'label' => '',
-      'exclude' => 0,
-      'id' => 'text',
-      'table' => 'twitter',
-      'field' => 'text',
-      'relationship' => 'none',
-    ),
-    'created_time' => array(
-      'label' => '',
-      'date_format' => 'time ago',
-      'custom_date_format' => '',
-      'exclude' => 0,
-      'id' => 'created_time',
-      'table' => 'twitter',
-      'field' => 'created_time',
-      'relationship' => 'none',
-    ),
-  ));
   $handler->override_option('items_per_page', 5);
   $handler->override_option('use_more', 1);
   $handler->override_option('style_plugin', 'list');
@@ -184,26 +204,6 @@ function twitter_views_default_views() {
   $handler->override_option('block_description', 'User Tweets');
   $handler->override_option('block_caching', -1);
   $handler = $view->new_display('block', 'Global block', 'block2');
-  $handler->override_option('fields', array(
-    'text' => array(
-      'label' => '',
-      'exclude' => 0,
-      'id' => 'text',
-      'table' => 'twitter',
-      'field' => 'text',
-      'relationship' => 'none',
-    ),
-    'created_time' => array(
-      'label' => '',
-      'date_format' => 'time ago',
-      'custom_date_format' => '',
-      'exclude' => 0,
-      'id' => 'created_time',
-      'table' => 'twitter',
-      'field' => 'created_time',
-      'relationship' => 'none',
-    ),
-  ));
   $handler->override_option('arguments', array());
   $handler->override_option('items_per_page', 5);
   $handler->override_option('use_more', 1);
