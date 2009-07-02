@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.7 2009/06/20 16:29:14 eaton Exp $
+// $Id: twitter.install,v 1.2.2.8 2009/07/02 13:04:33 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -89,7 +89,8 @@ function twitter_schema() {
         'description' => t("The unique identifier of the {twitter_account}."),
         'type' => 'numeric',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+        'precision' => 20,
+        'scale' => 0,        'not null' => TRUE,
         'default' => 0
       ),
       'screen_name' => array(
@@ -140,7 +141,8 @@ function twitter_schema() {
       'last_refresh' => array(
         'description' => t("A UNIX timestamp marking the date Twitter statuses were last fetched on."),
         'type' => 'int',
-        'not null' => TRUE
+        'not null' => TRUE,
+        'default' => 0,
       ),
     ),
     'indexes' => array('screen_name' => array('screen_name')),
@@ -391,6 +393,22 @@ function twitter_update_6006() {
   );
 
        
+  return $ret;
+}
+
+/*
+ * Update the last_refresh column to supply a default value. http://drupal.org/node/301317
+ */
+function twitter_update_6007() {
+  $ret = array();
+  db_change_field($ret, 'twitter_account', 'last_refresh', 'last_refresh',
+    array(
+      'description' => t("A UNIX timestamp marking the date Twitter statuses were last fetched on."),
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  );
   return $ret;
 }
 
