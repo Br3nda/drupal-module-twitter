@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.8 2009/07/02 13:04:33 eaton Exp $
+// $Id: twitter.install,v 1.2.2.9 2009/07/02 13:41:47 eaton Exp $
 
 /**
  * Implementation of hook_schema).
@@ -407,7 +407,7 @@ function twitter_update_6007() {
       'type' => 'int',
       'not null' => TRUE,
       'default' => 0,
-    ),
+    )
   );
   return $ret;
 }
