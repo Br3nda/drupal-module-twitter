@@ -1,8 +1,8 @@
 <?php
-// $Id: twitter.install,v 1.2.2.9 2009/07/02 13:41:47 eaton Exp $
+// $Id: twitter.install,v 1.2.2.10 2009/07/02 14:50:24 eaton Exp $
 
 /**
- * Implementation of hook_schema).
+ * Implementation of hook_schema().
  */
 function twitter_schema() {
   $schema['twitter'] = array(
@@ -190,7 +190,7 @@ function twitter_install() {
   // Create tables.
   drupal_install_schema('twitter');
 
-  // Set the weight to 3, making it heaving than Pathauto.
+  // Set the weight to 3, making it heavier than Pathauto.
   db_query("UPDATE {system} SET weight = 3 WHERE name = 'twitter'");
 }
 
