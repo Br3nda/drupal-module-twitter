@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.11 2009/07/02 13:23:44 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.12 2009/07/02 13:26:21 eaton Exp $
 
 /**
  * @file
@@ -140,6 +140,35 @@ function twitter_set_status($screen_name, $password, $text, $source = 'drupal') 
 
   return drupal_http_request($url, $headers, 'POST', $data);
 }
+
+
+/**
+ * Send a direct message to another Twitter user.
+ *
+ * @param $screen_name
+ *   The screen name of a Twitter.com user.
+ * @param $password
+ *   The password of a Twitter.com user.
+ * @param $to
+ *   The ID or screen name of the recipient user. 
+ * @param $text
+ *   The text to post. Strings longer than 140 characters will be truncated by
+ *   Twitter.
+ * @return
+ *   The full results of the Drupal HTTP request, including the HTTP response
+ *   code returned by Twitter.com.
+ */
+function twitter_send_dm($screen_name, $password, $to, $text) {
+  $url = "http://" . variable_get('twitter_api_url', 'twitter.com') . "/direct_messages/new.xml";
+
+  $headers = array('Authorization' => 'Basic '. base64_encode($screen_name .':'. $password),
+                   'Content-type' => 'application/x-www-form-urlencoded');
+  $data = 'text='. urlencode($text);
+  $data .= '&user='.$to;
+
+  return drupal_http_request($url, $headers, 'POST', $data);
+}
+
 
 /**
  * Fetch the full information for a Twitter.com account.
