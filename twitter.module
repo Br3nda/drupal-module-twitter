@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.10.2.2 2009/06/11 02:50:07 walkah Exp $
+// $Id: twitter.module,v 1.10.2.3 2010/01/11 05:08:36 walkah Exp $
 
 /**
  * Implementation of hook_meu()
@@ -23,6 +23,11 @@ function twitter_menu() {
     'page arguments' => array('twitter_admin_form'),
     'access arguments' => array('administer site configuration'),
     'file' => 'twitter.pages.inc'
+  );
+  
+  $items['admin/settings/twitter/default'] = array(
+    'title' => 'Twitter',
+    'type' => MENU_DEFAULT_LOCAL_TASK
   );
 
   $items['user/%user_category/edit/twitter'] = array(

@@ -1,15 +1,21 @@
 <?php
-// $Id: twitter_signin.module,v 1.1.2.1 2009/06/11 02:57:55 walkah Exp $
+// $Id: twitter_signin.module,v 1.1.2.2 2010/01/11 05:08:36 walkah Exp $
 
+/**
+ * Implementation of hook_menu().
+ */
 function twitter_signin_menu() {
   $items = array();
 
   $items['admin/settings/twitter/signin'] = array(
-    'title' => 'Twitter Signin Settings',
+    'title' => 'Sign-in',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('twitter_signin_admin_settings'),
+    'access arguments' => array('access site configuration'),
     'file' => 'twitter_signin.pages.inc',
     'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+    
   );
 
   return $items;
@@ -24,9 +30,13 @@ function twitter_signin_block($op = 'list', $delta = 0, $edit = array()) {
       $block[0]['info'] = t('Sign in with Twitter');
       return $block;
     case 'view':
-      $block['subject'] = t('Sign in with Twitter');
-      $block['content'] = drupal_get_form('twitter_signin_form');
-      return $block;
+      global $user;
+      
+      if (!$user->uid) {
+        $block['subject'] = t('Sign in with Twitter');
+        $block['content'] = drupal_get_form('twitter_signin_form');
+        return $block;
+      }
   }
 }
 
@@ -36,12 +46,12 @@ function twitter_signin_block($op = 'list', $delta = 0, $edit = array()) {
 function twitter_signin_form(&$form_state) {
   $form = array();
 
+  $img_path = drupal_get_path('module', 'twitter_signin') . '/images/';
+  $img = $img_path . variable_get('twitter_signin_button', 'Sign-in-with-Twitter-lighter-small.png');
   $form['signin'] = array(
     '#type' => 'image_button',
-    '#src' => drupal_get_path('module', 'twitter_signin') .'/images/Sign-in-with-Twitter-lighter-small.png',
-    
-  );
-  
+    '#src' => $img,
+  );  
   return $form;
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.2 2009/06/11 02:50:07 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.3 2010/01/11 05:08:36 walkah Exp $
 
 /**
  *
@@ -12,6 +12,12 @@ function twitter_admin_form() {
     '#title' => t('OAuth Settings'),
     '#description' => t(''),
     '#access' => module_exists('oauth'),
+  );
+
+  $form['oauth']['callback_url'] = array(
+    '#type' => 'item',
+    '#title' => t('Callback URL'),
+    '#value' => url('twitter/oauth', array('absolute' => TRUE)),
   );
 
   $form['oauth']['twitter_consumer_key'] = array(
