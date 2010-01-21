@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.9 2009/07/04 16:14:08 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.10 2010/01/21 06:35:15 eaton Exp $
 
 /**
  *
@@ -43,7 +43,7 @@ function twitter_admin_form() {
   $form['import']['twitter_expire'] = array(
     '#type' => 'select',
     '#title' => t('Delete old statuses'),
-    '#default_value' => variable_get('amazon_refresh_schedule', 0),
+    '#default_value' => variable_get('twitter_expire', 0),
     '#options' => $periods
   );
 
