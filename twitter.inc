@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.13 2009/07/04 16:14:08 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.14 2010/01/21 06:27:52 eaton Exp $
 
 /**
  * @file
@@ -39,7 +39,6 @@ function twitter_form($account = NULL) {
         '#type' => 'select',
         '#title' => t('Account'),
         '#options' => $twitter_accounts,
-        '#access' => user_access(''),
         '#id' => 'twitter-account',
       );
     }
