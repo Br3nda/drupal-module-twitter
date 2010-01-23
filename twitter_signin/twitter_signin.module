@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_signin.module,v 1.1.2.3 2010/01/11 06:25:18 walkah Exp $
+// $Id: twitter_signin.module,v 1.1.2.4 2010/01/23 18:00:05 walkah Exp $
 
 /**
  * Implementation of hook_menu().
@@ -19,7 +19,7 @@ function twitter_signin_menu() {
     'title' => 'Sign-in',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('twitter_signin_admin_settings'),
-    'access arguments' => array('access site configuration'),
+    'access arguments' => array('administer site configuration'),
     'file' => 'twitter_signin.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 5
