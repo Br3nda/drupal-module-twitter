@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.10.2.3 2010/01/11 05:08:36 walkah Exp $
+// $Id: twitter.module,v 1.10.2.4 2010/01/24 21:53:04 walkah Exp $
 
 /**
  * Implementation of hook_meu()
@@ -41,6 +41,15 @@ function twitter_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['user/%user/edit/twitter/global/%'] = array(
+    'title' => 'Twitter accounts',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_user_make_global', 1, 5),
+    'access arguments' => array('make twitter accounts global'),
+    'file' => 'twitter.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
   return $items;
 }
 
@@ -48,7 +57,7 @@ function twitter_menu() {
  * Implementation of hook_perm()
  */
 function twitter_perm() {
-  return array('add twitter accounts', 'use global twitter account');
+  return array('add twitter accounts', 'use global twitter account', 'make twitter accounts global');
 }
 
 /**

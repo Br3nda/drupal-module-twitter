@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.3.2.2 2009/06/20 03:45:26 walkah Exp $
+// $Id: twitter.install,v 1.3.2.3 2010/01/24 21:53:04 walkah Exp $
 
 /**
  * Implementation of hook_schema).
@@ -231,6 +231,13 @@ function twitter_schema() {
         'description' => t("A UNIX timestamp marking the date Twitter statuses were last fetched on."),
         'type' => 'int',
         'not null' => TRUE
+      ),
+      'is_global' => array(
+        'description' => t("Boolean flag indicating if this account is available for global use"),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
       ),
     ),
     'indexes' => array('screen_name' => array('screen_name')),

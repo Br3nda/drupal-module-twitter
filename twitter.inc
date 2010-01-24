@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.9.2.1 2009/05/28 06:45:22 walkah Exp $
+// $Id: twitter.inc,v 1.9.2.2 2010/01/24 21:53:04 walkah Exp $
 
 /**
  * Twitter API functions
@@ -49,11 +49,12 @@ function twitter_account_save($twitter_user, $save_auth = FALSE, $account = NULL
 
 function twitter_account_load($id) {
   module_load_include('lib.php', 'twitter');
-  
+
   $values = db_fetch_array(db_query("SELECT * FROM {twitter_account} WHERE twitter_uid = %d", $id));
   $values['id'] = $values['twitter_uid'];
   $account = new TwitterUser($values);
   $account->set_auth($values);
+  $account->is_global = $values['is_global'];
   
   return $account;
 }

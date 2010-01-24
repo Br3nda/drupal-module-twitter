@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.3 2010/01/11 05:08:36 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.4 2010/01/24 21:53:04 walkah Exp $
 
 /**
  *
@@ -32,25 +32,6 @@ function twitter_admin_form() {
     '#default_value' => variable_get('twitter_consumer_secret', NULL),
   );
   
-  $form['global_account'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Global account'),
-    '#description' => t('A site-wide Twitter account to use as the default when tweets are posted. This is useful for single-user blogs or sites where many users post to a single shared Twitter account.'),
-  );
-
-  $form['global_account']['twitter_global_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Twitter user name'),
-    '#default_value' => variable_get('twitter_global_name', NULL),
-  );
-  
-  $form['global_account']['twitter_global_password'] = array(
-    '#type' => 'password',
-    '#title' => t('Password'),
-    '#description' => t("If your Twitter account is protected, or you wish to post to Twitter from Drupal, you must enter the Twitter account's password."),
-    '#default_value' => variable_get('twitter_global_password', NULL),
-  );
-
   $form['import'] = array(
     '#type' => 'fieldset',
     '#title' => t('Twitter import'),
@@ -146,7 +127,7 @@ function _twitter_account_list_row($account) {
     '#type' => 'checkbox',
     '#default_value' => $account['import'],
   );
-
+  
   $form['delete'] = array(
     '#type' => 'checkbox',
   );
@@ -154,12 +135,17 @@ function _twitter_account_list_row($account) {
 }
 
 function theme_twitter_account_list_form($form) {
-  $header = array('', t('Name'), t('Description'), t('Private'), t('Import'), t('Delete'));
+  $header = array('', t('Name'), t('Description'), t('Private'), t('Import'), t('Delete')); 
+
+  if (user_access('make twitter accounts global')) {
+    $header[] = '';
+  }
+  
   $rows = array();
 
   foreach (element_children($form['accounts']) as $key) {
     $element = &$form['accounts'][$key];
-    $rows[] = array(
+    $row = array(
       drupal_render($element['image']),
       drupal_render($element['uid']) . drupal_render($element['screen_name']) . drupal_render($element['visible_name']),
       drupal_render($element['description']),
@@ -167,6 +153,13 @@ function theme_twitter_account_list_form($form) {
       drupal_render($element['import']),
       drupal_render($element['delete']),
     );
+
+    if (user_access('make twitter accounts global')) {
+      $label = ($element['#account']['is_global']) ? t('remove global') : t('make global');
+      $row[] = l($label, 'user/'. $element['uid']['#value'] .'/edit/twitter/global/'. $element['#account']['twitter_uid']);
+    }
+    
+    $rows[] = $row;
   }
 
   $output = theme('table', $header, $rows);
@@ -184,6 +177,41 @@ function twitter_account_list_form_submit($form, &$form_state) {
       twitter_user_delete($account['uid'], $account['screen_name']);
     }
   }
+}
+
+function twitter_user_make_global($form_state, $account, $twitter_uid) {
+  module_load_include('inc', 'twitter');
+
+  $twitter_account = twitter_account_load($twitter_uid);
+
+  $form = array();
+
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $account->uid,
+  );
+
+  $form['twitter_uid'] = array(
+    '#type' => 'value',
+    '#value' => $twitter_uid,
+  );
+
+  if ($twitter_account->is_global) {
+    $text = t('Are you sure you want to remove %screen_name from the global accounts?', array('%screen_name' => $twitter_account->screen_name));
+    $description = t('This means other users will no longer be allowed to post using this account.');
+  }
+  else {
+    $text = t('Are you sure you want to allow other users to access the %screen_name account?', array('%screen_name' => $twitter_account->screen_name));
+    $description = t('This will allow other users to post using this account.');
+  }
+  
+  return confirm_form($form, $text, 'user/'. $account->uid .'/edit/twitter', $description);
+}
+
+function twitter_user_make_global_submit($form, &$form_state) {
+  db_query("UPDATE {twitter_account} SET is_global = (1 - is_global) WHERE twitter_uid = %d", $form_state['values']['twitter_uid']);
+
+  $form_state['redirect'] = 'user/'. $form_state['values']['uid'] .'/edit/twitter';
 }
 
 function twitter_account_form($form_state, $account = NULL) {
