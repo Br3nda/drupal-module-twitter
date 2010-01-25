@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_signin.module,v 1.1.2.5 2010/01/23 23:27:21 walkah Exp $
+// $Id: twitter_signin.module,v 1.1.2.6 2010/01/25 03:14:45 walkah Exp $
 
 /**
  * Implementation of hook_menu().
@@ -40,7 +40,7 @@ function twitter_signin_block($op = 'list', $delta = 0, $edit = array()) {
     case 'view':
       global $user;
       
-      if (!$user->uid) {
+      if (!$user->uid && _twitter_use_oauth()) {
         $block['subject'] = t('Sign in with Twitter');
         $block['content'] = twitter_signin_button();
         return $block;
@@ -91,6 +91,11 @@ function twitter_signin_redirect() {
  * Implementation of hook_form_alter()
  */
 function twitter_signin_form_alter(&$form, $form_state, $form_id) {
+  // This only applies if we've got OAuth / signin enabled.
+  if (!_twitter_use_oauth()) {
+    return;
+  }
+  
   if ($form_id == 'twitter_oauth_callback' && $_SESSION['twitter_oauth']['signin']) {
     $form['#submit'] = array_merge(array('twitter_signin_oauth_callback_submit'), $form['#submit']);
   }
