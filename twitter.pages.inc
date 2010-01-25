@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.4 2010/01/24 21:53:04 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.5 2010/01/25 03:40:39 walkah Exp $
 
 /**
  *
@@ -12,6 +12,7 @@ function twitter_admin_form() {
     '#title' => t('OAuth Settings'),
     '#description' => t(''),
     '#access' => module_exists('oauth'),
+    '#description' => t('To enable OAuth based access for twitter, you must <a href="@url">register your application</a> with twitter and add the provided keys here.', array('@url' => 'https://twitter.com/apps/new')),
   );
 
   $form['oauth']['callback_url'] = array(
