@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.10.2.4 2010/01/24 21:53:04 walkah Exp $
+// $Id: twitter.module,v 1.10.2.5 2010/01/25 05:09:05 walkah Exp $
 
 /**
  * Implementation of hook_meu()
@@ -88,8 +88,8 @@ function twitter_theme() {
  * Very lightweight helper function to generate a TinyURL for a given post.
  */
 function twitter_shorten_url($url) {
-  if (function_exists('custom_twitter_shorten_url')) {
-    return custom_twitter_shorten_url($url);
+  if (module_exists('shorten')) {
+    return shorten_url($url);
   }
   else {
     $response = drupal_http_request("http://tinyurl.com/api-create.php?url=" . $url);
@@ -202,34 +202,38 @@ function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitte
 }
 
 /**
+ * Get a list of twitter accounts available to the current user.
+ *
+ * @return Array containing TwitterAccount objects
+ */
+function twitter_get_user_accounts($uid) {
+  $drupal_user = user_load($uid);
+  return module_invoke_all('twitter_accounts', $drupal_user);
+}
+
+
+/**
  * An implementation of hook_twitter_accounts. We want to move this into a
  * separate module eventually, but sticking the code here and using a hook
  * lets other modules solve the 'what accounts can a user post with' problem
  * in cleaner ways.
  */
-function twitter_twitter_accounts($drupal_user, $full_access = FALSE) {
-  $accounts = array();
-  if (user_access('use global twitter account') &&
-      ($name = variable_get('twitter_global_name', NULL)) &&
-      ($pass = variable_get('twitter_global_password', NULL))) {
-    
-    $accounts[$name] = array(
-      'screen_name' => $name,
-      'password' => $pass,
-    );
-  }
+function twitter_twitter_accounts($account) {
+  module_load_include('inc', 'twitter');
   
-  $sql = "SELECT * FROM {twitter_account} WHERE uid = %d";
-  if ($full_access) {
-    $sql .= " AND password IS NOT NULL";
+  $twitter_accounts = array();
+  
+  $sql = "SELECT twitter_uid FROM {twitter_account} WHERE uid = %d";
+  if (user_access('use global twitter account')) {
+    $sql.= " OR is_global=1";
   }
-  $args = array($drupal_user->uid);
-  $results = db_query($sql, $args);
+  $results = db_query($sql, $account->uid);
 
-  while ($account = db_fetch_array($results)) {
-    $accounts[$account['screen_name']] = $account;
+  while ($row = db_fetch_array($results)) {
+    $key = $row['twitter_uid'];
+    $twitter_accounts[] = twitter_account_load($key);
   }
-  return $accounts;
+  return $twitter_accounts;
 }
 
 function _twitter_use_oauth() {

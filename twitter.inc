@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.9.2.2 2010/01/24 21:53:04 walkah Exp $
+// $Id: twitter.inc,v 1.9.2.3 2010/01/25 05:09:05 walkah Exp $
 
 /**
  * Twitter API functions
@@ -76,6 +76,19 @@ function twitter_status_save($status) {
   
 }
 
+/**
+ * Post a message to twitter
+ */
+function twitter_set_status($twitter_account, $status) {
+  module_load_include('lib.php', 'twitter');
+
+  $twitter = twitter_connect($twitter_account);
+  $twitter->status_update($status);
+}
+
+/**
+ * Fetches a user's timeline
+ */
 function twitter_fetch_user_timeline($id) {
   $account = twitter_account_load($id);
 
@@ -97,15 +110,6 @@ function twitter_fetch_user_timeline($id) {
     twitter_account_save($statuses[0]->user);
   }
   db_query("UPDATE {twitter_account} SET last_refresh = %d WHERE twitter_uid=%d", time(), $account->id);
-}
-
-/**
- * User/account relationship code
- */
-
-function twitter_get_user_accounts($uid, $full_access = FALSE) {
-  $drupal_user = user_load($uid);
-  return module_invoke_all('twitter_accounts', $drupal_user, $full_access);
 }
 
 function twitter_user_delete($uid, $screen_name = NULL) {
