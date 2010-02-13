@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.10 2009/06/11 03:01:02 walkah Exp $
+// $Id: twitter.inc,v 1.11 2010/02/13 21:01:41 walkah Exp $
 
 /**
  * Twitter API functions
@@ -28,7 +28,7 @@ function twitter_connect($account) {
  */
 function twitter_account_save($twitter_user, $save_auth = FALSE, $account = NULL) {
   $values = (array)$twitter_user;
-  $values['twitter_uid'] = $twitter_user->id;
+  $values['twitter_uid'] = $values['id'];
 
   if ($save_auth) {
     $values += $twitter_user->get_auth();
@@ -38,8 +38,7 @@ function twitter_account_save($twitter_user, $save_auth = FALSE, $account = NULL
     }
     $values['uid'] = $account->uid;
   }
-
-  if (db_result(db_query("SELECT 1 FROM {twitter_account} WHERE twitter_uid = %d", $twitter_user->id))) {
+  if (db_result(db_query("SELECT 1 FROM {twitter_account} WHERE twitter_uid = %d", $values['id']))) {
     drupal_write_record('twitter_account', $values, array('twitter_uid'));
   }
   else {
@@ -49,11 +48,13 @@ function twitter_account_save($twitter_user, $save_auth = FALSE, $account = NULL
 
 function twitter_account_load($id) {
   module_load_include('lib.php', 'twitter');
-  
+
   $values = db_fetch_array(db_query("SELECT * FROM {twitter_account} WHERE twitter_uid = %d", $id));
   $values['id'] = $values['twitter_uid'];
   $account = new TwitterUser($values);
   $account->set_auth($values);
+  $account->import = $values['import'];
+  $account->is_global = $values['is_global'];
   
   return $account;
 }
@@ -75,6 +76,19 @@ function twitter_status_save($status) {
   
 }
 
+/**
+ * Post a message to twitter
+ */
+function twitter_set_status($twitter_account, $status) {
+  module_load_include('lib.php', 'twitter');
+
+  $twitter = twitter_connect($twitter_account);
+  $twitter->status_update($status);
+}
+
+/**
+ * Fetches a user's timeline
+ */
 function twitter_fetch_user_timeline($id) {
   $account = twitter_account_load($id);
 
@@ -96,15 +110,6 @@ function twitter_fetch_user_timeline($id) {
     twitter_account_save($statuses[0]->user);
   }
   db_query("UPDATE {twitter_account} SET last_refresh = %d WHERE twitter_uid=%d", time(), $account->id);
-}
-
-/**
- * User/account relationship code
- */
-
-function twitter_get_user_accounts($uid, $full_access = FALSE) {
-  $drupal_user = user_load($uid);
-  return module_invoke_all('twitter_accounts', $drupal_user, $full_access);
 }
 
 function twitter_user_delete($uid, $screen_name = NULL) {
