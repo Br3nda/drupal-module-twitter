@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.6 2010/01/25 03:47:17 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.7 2010/02/13 20:32:56 walkah Exp $
 
 /**
  *
@@ -94,44 +94,45 @@ function twitter_account_list_form($form_state, $twitter_accounts = array()) {
 function _twitter_account_list_row($account) {
   $form['#account'] = $account;
 
-  $form['uid'] = array(
+  $form['id'] = array(
     '#type' => 'value',
-    '#value' => $account['uid'],
+    '#value' => $account->id,
   );
 
   $form['screen_name'] = array(
     '#type' => 'value',
-    '#value' => $account['screen_name'],
+    '#value' => $account->screen_name,
   );
 
   $form['image'] = array(
     '#type' => 'markup',
-    '#value' => theme('image', $account['profile_image_url'], '', '', array(), FALSE),
+    '#value' => theme('image', $account->profile_image_url, '', '', array(), FALSE),
   );
 
   $form['visible_name'] = array(
     '#type' => 'markup',
-    '#value' => l($account['screen_name'], 'http://www.twitter.com/' . $account['screen_name']),
+    '#value' => l($account->screen_name, 'http://www.twitter.com/' . $account->screen_name),
   );
 
   $form['description'] = array(
     '#type' => 'markup',
-    '#value' => filter_xss($account['description']),
+    '#value' => filter_xss($account->description),
   );
 
   $form['protected'] = array(
     '#type' => 'markup',
-    '#value' => empty($account['protected']) ? t('No') : t('Yes'),
+    '#value' => empty($account->protected) ? t('No') : t('Yes'),
   );
 
   $form['import'] = array(
     '#type' => 'checkbox',
-    '#default_value' => $account['import'],
+    '#default_value' => $account->import,
   );
   
   $form['delete'] = array(
     '#type' => 'checkbox',
   );
+
   return $form;
 }
 
@@ -156,8 +157,8 @@ function theme_twitter_account_list_form($form) {
     );
 
     if (user_access('make twitter accounts global')) {
-      $label = ($element['#account']['is_global']) ? t('remove global') : t('make global');
-      $row[] = l($label, 'user/'. $element['uid']['#value'] .'/edit/twitter/global/'. $element['#account']['twitter_uid']);
+      $label = ($element['#account']->is_global) ? t('remove global') : t('make global');
+      $row[] = l($label, 'user/'. $element['uid']['#value'] .'/edit/twitter/global/'. $element['#account']->twitter_uid);
     }
     
     $rows[] = $row;
