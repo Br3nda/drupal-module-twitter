@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.9.2.4 2010/02/13 20:32:56 walkah Exp $
+// $Id: twitter.inc,v 1.9.2.5 2010/02/14 04:08:53 walkah Exp $
 
 /**
  * Twitter API functions
@@ -112,9 +112,9 @@ function twitter_fetch_user_timeline($id) {
   db_query("UPDATE {twitter_account} SET last_refresh = %d WHERE twitter_uid=%d", time(), $account->id);
 }
 
-function twitter_user_delete($uid, $screen_name = NULL) {
-  $sql = "DELETE FROM {twitter_account} WHERE uid = %d";
-  $args = array($uid);
+function twitter_user_delete($twitter_uid, $screen_name = NULL) {
+  $sql = "DELETE FROM {twitter_account} WHERE twitter_uid = %d";
+  $args = array($twitter_uid);
   if (!empty($screen_name)) {
     $sql .= " AND screen_name = '%s'";
     $args[] = $screen_name;

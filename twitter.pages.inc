@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.7 2010/02/13 20:32:56 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.8 2010/02/14 04:08:53 walkah Exp $
 
 /**
  *
@@ -176,7 +176,7 @@ function twitter_account_list_form_submit($form, &$form_state) {
       twitter_account_save($account);
     }
     else {
-      twitter_user_delete($account['uid'], $account['screen_name']);
+      twitter_user_delete($account['id'], $account['screen_name']);
     }
   }
 }
