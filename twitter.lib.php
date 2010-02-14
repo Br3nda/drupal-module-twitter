@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.lib.php,v 1.1.2.4 2009/06/20 03:45:26 walkah Exp $
+// $Id: twitter.lib.php,v 1.1.2.5 2010/02/14 04:11:45 walkah Exp $
 
 /**
  * @file
@@ -330,7 +330,7 @@ class TwitterOAuth extends Twitter {
       case 'GET':
         return $this->request($request->to_url());
       case 'POST':
-        return $this->request($request->get_normalized_http_url(), $request->to_postdata());
+        return $this->request($request->get_normalized_http_url(), $request->get_parameters(), 'POST');
     }
   }
 
