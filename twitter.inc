@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.9.2.5 2010/02/14 04:08:53 walkah Exp $
+// $Id: twitter.inc,v 1.9.2.6 2010/02/16 00:51:17 walkah Exp $
 
 /**
  * Twitter API functions
@@ -53,6 +53,7 @@ function twitter_account_load($id) {
   $values['id'] = $values['twitter_uid'];
   $account = new TwitterUser($values);
   $account->set_auth($values);
+  $account->uid = $values['uid'];
   $account->import = $values['import'];
   $account->is_global = $values['is_global'];
   

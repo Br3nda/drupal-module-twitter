@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.4.2.8 2010/02/14 04:08:53 walkah Exp $
+// $Id: twitter.pages.inc,v 1.4.2.9 2010/02/16 00:51:17 walkah Exp $
 
 /**
  *
@@ -99,6 +99,11 @@ function _twitter_account_list_row($account) {
     '#value' => $account->id,
   );
 
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $account->uid,
+  );
+  
   $form['screen_name'] = array(
     '#type' => 'value',
     '#value' => $account->screen_name,
@@ -149,7 +154,7 @@ function theme_twitter_account_list_form($form) {
     $element = &$form['accounts'][$key];
     $row = array(
       drupal_render($element['image']),
-      drupal_render($element['uid']) . drupal_render($element['screen_name']) . drupal_render($element['visible_name']),
+      drupal_render($element['id']) . drupal_render($element['screen_name']) . drupal_render($element['visible_name']),
       drupal_render($element['description']),
       drupal_render($element['protected']),
       drupal_render($element['import']),
@@ -158,7 +163,7 @@ function theme_twitter_account_list_form($form) {
 
     if (user_access('make twitter accounts global')) {
       $label = ($element['#account']->is_global) ? t('remove global') : t('make global');
-      $row[] = l($label, 'user/'. $element['uid']['#value'] .'/edit/twitter/global/'. $element['#account']->twitter_uid);
+      $row[] = l($label, 'user/'. $element['#account']->uid .'/edit/twitter/global/'. $element['#account']->id);
     }
     
     $rows[] = $row;
