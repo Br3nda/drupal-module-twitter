@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_actions.module,v 1.1.2.4 2010/02/23 18:47:06 eaton Exp $
+// $Id: twitter_actions.module,v 1.1.2.5 2010/02/23 19:09:23 eaton Exp $
 
 /**
  * @file
@@ -39,6 +39,7 @@ function twitter_actions_set_status_action_form($context = array()) {
     'screen_name' => '',
     'password' => '',
     'message' => '',
+    'node_types' => '',
   );
 
   $form['screen_name'] = array(
@@ -54,6 +55,18 @@ function twitter_actions_set_status_action_form($context = array()) {
     '#type'          => 'password',
     '#size'          => 25,
     '#required'      => TRUE,
+  );
+
+  $node_types = node_get_types();
+  $options = drupal_map_assoc(array_keys($node_types));
+  $form['node_types'] = array(
+    '#type' => 'select',
+    '#title' => t('Node types'),
+    '#options' => $options,
+    '#description' => t('Nodes of these types will be tweeted (only applies if the trigger for this action is a content trigger).'),
+    '#default_value' => $context['node_types'],
+    '#required' => TRUE,
+    '#multiple' => TRUE,
   );
 
   $form['message'] = array(
@@ -106,6 +119,7 @@ function twitter_actions_set_status_action_submit($form, $form_state) {
     'screen_name' => $form_values['screen_name'],
     'password'   => $form_values['password'],
     'message'   => $form_values['message'],
+    'node_types' => $form_values['node_types'],
   );
   return $params;
 }
@@ -118,8 +132,13 @@ function twitter_actions_set_status_action($object, $context) {
   module_load_include('inc', 'twitter');
   if (module_exists('token')) {
     $message = token_replace_multiple($context['message'], $context);
-    if ((strstr($message, '[shorturl]') !== FALSE) && ($node = $context['node'])) {
-      $message = str_replace($message, twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE))), '[shorturl]');
+    if ($node = $context['node']) {
+	  if(!isset($context['node_types'][$node->type])) {
+        return;
+      }
+      else if ((strstr($message, '[shorturl]') !== FALSE)) {
+       $message = str_replace($message, twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE))), '[shorturl]');
+      }
     }
   }
   twitter_set_status($context['screen_name'], $context['password'], $message);
