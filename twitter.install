@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.install,v 1.2.2.10 2009/07/02 14:50:24 eaton Exp $
+// $Id: twitter.install,v 1.2.2.11 2010/02/23 18:47:06 eaton Exp $
 
 /**
  * Implementation of hook_schema().
@@ -409,6 +409,41 @@ function twitter_update_6007() {
       'default' => 0,
     )
   );
+  return $ret;
+}
+
+/*
+ * Replace default Tweet settings with actual tokens, since we're all tokeny and stuff now.
+ * Also update any old actions.
+ */
+function twitter_update_6208() {
+  $ret = array();
+
+  $replacements = array('!title' => '[title]',
+                      '!url' => '[url]',
+                      '!url-alias' => '[url-alias]',
+                      '!user' => '[author-name]',
+                      '!tinyurl' => '[shorturl]');
+  $var = variable_get('twitter_default_format', 'New post: !title !tinyurl');
+  variable_set('twitter_default_format', strtr($var, $replacements));
+  $ret[] = array('success' => TRUE, 'query' => t('Updated Twitter default text to use Tokens.'));
+
+  $replacements = array('%site_name' => '[site-name]',
+                      '%username' => '[author-name]',
+                      '%node_url' => '[url]',
+                      '%node_type' => '[type]',
+                      '%title' => '[title]');
+  $results = db_query("SELECT aid, parameters FROM {actions} WHERE callback = 'twitter_actions_set_status_action'");
+  while ($action = db_fetch_object($results)) {
+    $params = unserialize($action->parameters);
+    foreach($params as $key => $value) {
+      $params[$key] = strtr($value, $replacements);
+    }
+    $action->parameters = serialize($params);
+    db_query("UPDATE {actions} SET parameters = '%s' WHERE aid = '%s'", $action->aid, $action->parameters);
+    $ret[] = array('success' => TRUE, 'query' => t('Updated action %aid to use Tokens.', array('%aid' => $action->aid)));
+  }
+
   return $ret;
 }
 

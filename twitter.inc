@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.inc,v 1.3.2.14 2010/01/21 06:27:52 eaton Exp $
+// $Id: twitter.inc,v 1.3.2.15 2010/02/23 18:47:06 eaton Exp $
 
 /**
  * @file
@@ -551,4 +551,21 @@ function _twitter_account_fields($user, $account = array()) {
   );
 
   return $form;
+}
+
+
+/**
+ * This function exists because we have an extra-special shorturl token
+ * whose value should only be generated if the token is used. This problem
+ * goes away in D7's on-demand token system.
+ */
+function _twitter_replace_tokens($text, $node) {
+  if (module_exists('token')) {
+    $full = token_get_values('node', $node);
+    if (strstr($text, '[shorturl]') !== FALSE) {
+      $full->tokens[] = '[shorturl]';
+      $full->values[] = twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE)));
+    }
+    return _token_replace_tokens($text, $full->tokens, $full->values);
+  }
 }

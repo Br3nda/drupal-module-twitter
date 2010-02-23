@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.pages.inc,v 1.2.2.10 2010/01/21 06:35:15 eaton Exp $
+// $Id: twitter.pages.inc,v 1.2.2.11 2010/02/23 18:47:06 eaton Exp $
 
 /**
  *
@@ -64,8 +64,8 @@ function twitter_admin_form() {
     '#type' => 'textfield',
     '#title' => t('Default format string'),
     '#maxlength' => 140,
-    '#description' => t('The given text will be posted to twitter.com. You can use !url, !url-alias, !tinyurl, !title, and !user as replacement text.'),
-    '#default_value' => variable_get('twitter_default_format', 'New post: !title !tinyurl'),
+    '#description' => t('The given text will be posted to twitter.com. You can use [url], [url-alias], [shorturl], [title] and [author-name] (as well as other tokens supplied by Token module) as placeholders.'),
+    '#default_value' => variable_get('twitter_default_format', 'New post: [title] [shorturl]'),
   );
 
   $form['twitter_api_url'] = array(
