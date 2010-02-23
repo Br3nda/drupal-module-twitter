@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.3.2.15 2010/02/23 18:47:06 eaton Exp $
+// $Id: twitter.module,v 1.3.2.16 2010/02/23 20:13:16 eaton Exp $
 
 /**
  * Implementation of hook_meu()
@@ -252,9 +252,9 @@ function twitter_filter_tips($delta, $format, $long = FALSE) {
  */
 function twitter_link_filter($text, $prefix = '@', $destination = 'http://twitter.com/') {
   $matches = array(
-    '/\>' . $prefix . '([a-z0-9_]{0,15})/i',
-    '/^' . $prefix . '([a-z0-9_]{0,15})/i',
-    '/(\s+)' . $prefix . '([a-z0-9_]{0,15})/i',
+    '/\>' . $prefix . '([a-z0-9_]{1,15})/i',
+    '/^' . $prefix . '([a-z0-9_]{1,15})/i',
+    '/(\s+)' . $prefix . '([a-z0-9_]{1,15})/i',
   );
   $replacements = array(
     '><a href="' . $destination . '${1}">' . $prefix . '${1}</a>',
