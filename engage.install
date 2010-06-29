@@ -9,4 +9,13 @@ function engage_schema() {
     'primary key' => array('uid'),
     
   );
+  return $schema;
+}
+
+function engage_install() {
+  drupal_install_schema('engage');
+}
+
+function engage_unstall() {
+  drupal_install_schema('engage');
 }
