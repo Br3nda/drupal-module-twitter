@@ -1,0 +1,12 @@
+<?php
+
+function engage_schema() {
+  $schema['engage_users'] = array(
+    'fields' => array(
+      'uid' => array('type' => 'int', 'not null' => TRUE),
+      'reply_count' => array('type' => 'int', 'default' => 0),
+    ),
+    'primary key' => array('uid'),
+    
+  );
+}

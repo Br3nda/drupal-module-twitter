@@ -1,0 +1,5 @@
+name = Engage-o-meter
+description = Track a twitter user's engagement level
+package = Twitter
+version = VERSION
+core = 6.x
