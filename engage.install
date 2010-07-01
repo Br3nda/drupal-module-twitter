@@ -4,6 +4,8 @@ function engage_schema() {
   $schema['engage_users'] = array(
     'fields' => array(
       'uid' => array('type' => 'int', 'not null' => TRUE),
+      'nid' => array('type' => 'int', 'not null' => TRUE),
+      'real_name' => array('type' => 'text'),
       'reply_count' => array('type' => 'int', 'default' => 0),
     ),
     'primary key' => array('uid'),
@@ -16,6 +18,7 @@ function engage_install() {
   drupal_install_schema('engage');
 }
 
-function engage_unstall() {
-  drupal_install_schema('engage');
+function engage_uninstall() {
+  drupal_uninstall_schema('engage');
+  update_sql("DELETE FROM {node} where type='engage'");
 }
