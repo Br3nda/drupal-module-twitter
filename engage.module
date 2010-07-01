@@ -167,6 +167,7 @@ function engage_load($node) {
 //twitter_twitter_accounts($drupal_user
   $node->engage = db_fetch_object(db_query("SELECT * FROM {engage_users} WHERE nid = %d", $node->nid));
   $node->engage->user = user_load(array('uid' => $node->engage->uid));
+  $node->title = $node->twitter_username;
 // 
 //   return $engage;
   return $node;
@@ -186,7 +187,13 @@ function engage_insert($node) {
   drupal_set_message(print_r($user, 1));
 
   $user = user_save($user, array('name' => $node->twitter_username));
+
+  module_load_include('inc', 'twitter');
+  twitter_user_save(array('uid' => $user->uid, 'screen_name' => $node->twitter_username));
+//   Array ( [uid] => 1 [screen_name] => megan [password] => [import] => 1 [op] => Add account [submit] => Add account [form_build_id] => form-602719b41347547528c29eedb3e4e152 [form_token] => af85b74b98f850c097c8abc44b8147f7 [form_id] => twitter_add_account )
   $result = db_query("INSERT INTO {engage_users} (uid, nid) VALUES (%d,%d)", $user->uid, $node->nid);
+
+
 
 }
 
