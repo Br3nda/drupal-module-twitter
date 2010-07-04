@@ -9,7 +9,16 @@ function engage_schema() {
       'reply_count' => array('type' => 'int', 'default' => 0),
     ),
     'primary key' => array('screen_name'),
-    
+
+  );
+
+  $schema['engage_cache'] = array(
+    'fields' => array(
+      'screen_name' => array('type' => 'text', 'not null' => TRUE),
+      'replies' => array('type' => 'int'),
+      'retweets' => array('type' => 'int'),
+      'broadcasts' => array('type' => 'int'),
+    ),
   );
   return $schema;
 }

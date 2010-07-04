@@ -38,28 +38,77 @@ function engage_pattern_count($pattern) {
 }
 
 function engage_page() {
-  $result = db_query("SELECT t.*, e.nid FROM {twitter_user} t LEFT OUTER JOIN {engage_users} e ON t.screen_name = e.screen_name");
+//     module_load_include('inc', 'twitter');
+// 
+//   $account['uid'] =1;
+// 
+//   $mps = array(
+//     'PaulQuinnMP',
+//     'GarethMP',
+//     'StuartNashMP',
+//     'MaungakiekieSAM',
+//     'SWSio',
+//     'rogerdouglas',
+//     'rodneyhide',
+//     'LynnePillay',
+//     'jcolemanmp',
+//     'JackieBlueMP',
+//     'CJTremain',
+//     'ChrisAuchinvole',
+//     'ChesterBorrows',
+//     'carmelsepuloni',
+//     'aarongilmore',
+//     'DarienFenton',
+//     'HeatherRoyMP',
+//     'DavidShearerMP',
+//     'amyadamsMP',
+//     'DavidClendon',
+//     'chrisfinlayson',
+//     'nikkikaye',
+//     'katrinashanks',
+//     'LianneDalzielMP',
+//     'hondavidcarter',
+//     'jacindaardern',
+//     'MoanaMackey',
+//     'darrenhughesmp',
+//     'metiria',
+//     'leesgallowaymp',
+//     'grantrobertson1',
+//     'chrishipkins',
+//     'annettekingmp',
+//     'phil_goff',
+//     'greencatherine',
+//     'KeithLocke',
+//     'clarecurranmp',
+//     'johnkeypm',
+//     'CraigFossMP',
+//     'RusselNorman',
+//     'KevinHague',
+//     'charleschauvel',
+//     'PhilTwyford',
+//     'LouiseUpston',
+// 'KennedyGraham',
+// 'SusieKew',
+//   );
+//   
+//   foreach($mps as $name) {
+//     $account['screen_name'] = $name;
+//     twitter_user_save($account, true);
+//     drupal_set_message($name);
+// //     twitter_cache_account
+//   }
+//   return '';
+  
+
+  $result = db_query("SELECT * FROM {twitter_account}");
   $output = '';
 
   $retweets = engage_pattern_count(" like 'RT %'");
   $engage = engage_pattern_count(" like '%@%'");
   $broadcast = engage_pattern_count("not like '%@%'");
 
-  $headers = array('Name', '', '', '', 'ReTweets', 'Replies/mentions', 'Broadcasts', 'Percentage Interaction');
 
   while ($account = db_fetch_array($result)) {
-    unset($node);
-    if (!$account['nid']) {
-      $node->title = $account['screen_name'];
-      $node->type = 'engage';
-      $node->published = 0;
-      node_save($node);
-      db_query("INSERT INTO {engage_users} (screen_name, nid) VALUES ('%s', %d)", $account['screen_name'], $node->nid);
-      drupal_set_message(sprintf("New node made %d %d", $account['uid'], $node->nid) );
-    }
-    else {
-      $node = node_load(array('nid' => $account['nid']));
-    }
     $e = $engage[$account['screen_name']];
     $b = $broadcast[$account['screen_name']];
     $rt = $retweets[$account['screen_name']];
@@ -70,13 +119,16 @@ function engage_page() {
     else
     $percent_engage = 0;
       
-    $rows[] = array($account['screen_name'],
-      l('user', 'user/'. $account['uid']),
-      l('twitter', 'http://www.twitter.com/' . $account['screen_name']),
-      l('node', 'node/'. $node->nid),
+    $rows[] = array(
+//       l('user', 'user/'. $account['uid']),
+      l($account['screen_name'], 'http://www.twitter.com/' . $account['screen_name']),
+      t($account['description']),
+//       l('node', 'node/'. $node->nid),
       $rt, $e, $b, sprintf('%.2f%%', $percent_engage),
     );
   }
+  $headers = array('Name', '', 'ReTweets', 'Replies/mentions', 'Broadcasts', 'Percentage Interaction');
+
   $output .= theme('table', $headers, $rows);
 
   return $output;
