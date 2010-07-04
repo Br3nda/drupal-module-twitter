@@ -14,17 +14,6 @@ function engage_menu() {
   return $items;
 }
 
-function engage_node_info(){
-  return array('engage' => array(
-    'title' => 'Tracked Twitter Engagement',
-  ));
-}
-
-function engage_view($node, $teaser = FALSE, $page = FALSE) {
-  $node->content['hello'] = array('#value' => 'hello');
-  return node_prepare($node, $teaser);
-}
-
 function engage_cron() {
   engage_page();
 }
