@@ -1,279 +1,83 @@
 <?php
 
-
-function engage_cron() {
-  $result = db_query("SELECT * FROM {engage_users}");
-  while ($u = db_fetch_object($result)) {
-    drupal_set_message($u->uid);
-  }
-}
-
-function engage_perms() {
-  return array('Add to tracked twitter users');
-}
-
-
-function engage_nodeapi(&$node, $op, $teaser, $page) {
-  if (!preg_match('!^engage!', $node->type)) {
-    return;
-  }
-  drupal_set_message($op);
-  switch ($op) {
-  }
-
-}
-
-/**
- * Implementation of hook_perm().
- */
-function engage_perm() {
-  return array('create engage content', 'delete own engage content', 'delete any engage content', 'edit any engage content', 'edit own engage content', 'vote on engages', 'cancel own vote', 'inspect all votes');
-}
-
-/**
- * Implementation of hook_access().
- */
-function engage_access($op, $node, $account) {
-  switch ($op) {
-    case 'create':
-      return user_access('create engage content', $account) ? TRUE : NULL;
-    case 'update':
-      return user_access('edit any engage content', $account) || (user_access('edit own engage content', $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
-    case 'delete':
-      return user_access('delete any engage content', $account) || (user_access('delete own engage content', $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
-  }
-}
-
 /**
  * Implementation of hook_menu().
  */
 function engage_menu() {
   $items['engage'] = array(
-    'title' => 'Polls',
+    'title' => 'Engage',
     'page callback' => 'engage_page',
     'access arguments' => array('access content'),
     'type' => MENU_SUGGESTED_ITEM,
-    'file' => 'engage.pages.inc',
-  );
-
-//   $items['node/%node/votes'] = array(
-//     'title' => 'Votes',
-//     'page callback' => 'engage_votes',
-//     'page arguments' => array(1),
-//     'access callback' => '_engage_menu_access',
-//     'access arguments' => array(1, 'inspect all votes', FALSE),
-//     'weight' => 3,
-//     'type' => MENU_LOCAL_TASK,
-//     'file' => 'engage.pages.inc',
-//   );
-
-  $items['node/%node/results'] = array(
-    'title' => 'Results',
-    'page callback' => 'engage_results',
-    'page arguments' => array(1),
-    'access callback' => '_engage_menu_access',
-    'access arguments' => array(1, 'access content', TRUE),
-    'weight' => 3,
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'engage.pages.inc',
   );
 
   return $items;
 }
 
-/**
- * Callback function to see if a node is acceptable for engage menu items.
- */
-function _engage_menu_access($node, $perm, $inspect_allowvotes) {
-  return user_access($perm) && ($node->type == 'engage') && ($node->allowvotes || !$inspect_allowvotes);
+function engage_node_info(){
+  return array('engage' => array(
+    'title' => 'Tracked Twitter Engagement',
+  ));
 }
 
-/**
- * Implementation of hook_block().
- *
- * Generates a block containing the latest engage.
- */
-// function engage_block($op = 'list', $delta = 0) {
-//   if (user_access('access content')) {
-//     if ($op == 'list') {
-//       $blocks[0]['info'] = t('Most recent engage');
-//       return $blocks;
-//     }
-//     else if ($op == 'view') {
-//       // Retrieve the latest engage.
-//       $sql = db_rewrite_sql("SELECT MAX(n.created) FROM {node} n INNER JOIN {engage} p ON p.nid = n.nid WHERE n.status = 1 AND p.active = 1");
-//       $timestamp = db_result(db_query($sql));
-//       if ($timestamp) {
-//         $engage = node_load(array('type' => 'engage', 'created' => $timestamp, 'status' => 1));
-// 
-//         if ($engage->nid) {
-//           $engage = engage_view($engage, TRUE, FALSE, TRUE);
-//         }
-//       }
-//       $block['subject'] = t('Poll');
-//       $block['content'] = drupal_render($engage->content);
-//       return $block;
-//     }
-//   }
-// }
-
-/**
- * Implementation of hook_node_info().
- */
-function engage_node_info() {
-  return array(
-    'engage' => array(
-      'name' => t('Tracked Twitter User'),
-      'module' => 'engage',
-      'title_label' => t('Question'),
-      'has_body' => FALSE,
-    )
-  );
+function engage_view($node, $teaser = FALSE, $page = FALSE) {
+  $node->content['hello'] = array('#value' => 'hello');
+  return node_prepare($node, $teaser);
 }
 
-/**
- * Implementation of hook_form().
- */
-function engage_form(&$node, $form_state) {
-  global $user;
-
-  $admin = user_access('administer nodes') || user_access('edit any engage content') || (user_access('edit own engage content') && $user->uid == $node->uid);
-
-  $form['twitter_username'] = array('#title' => 'Twitter Username', '#type' => 'textfield', '#required' => true);
-
-  return $form;
+function engage_cron() {
+  engage_page();
 }
 
-/**
- * Renumbers fields and creates a teaser when a engage node is submitted.
- */
-function engage_node_form_submit(&$form, &$form_state) {
-  // Renumber fields
-  drupal_set_message('save goes here');
+function engage_pattern_count($pattern) {
+  $result = db_query("select screen_name, count(twitter_id) from twitter where text $pattern group by screen_name;");
+  while($b = db_fetch_array($result)) {
+    $matches[$b['screen_name']] = $b['count'];
+  }
+  return $matches;
 }
 
-/**
- * Implementation of hook_validate().
- */
-function engage_validate($node) {
-drupal_set_message("validate goes here");
-}
+function engage_page() {
+  $result = db_query("SELECT t.*, e.nid FROM {twitter_user} t LEFT OUTER JOIN {engage_users} e ON t.screen_name = e.screen_name");
+  $output = '';
 
-/**
- * Implementation of hook_load().
- */
-function engage_load($node) {
+  $retweets = engage_pattern_count(" like 'RT %'");
+  $engage = engage_pattern_count(" like '%@%'");
+  $broadcast = engage_pattern_count("not like '%@%'");
 
-//twitter_twitter_accounts($drupal_user
-  $node->engage = db_fetch_object(db_query("SELECT * FROM {engage_users} WHERE nid = %d", $node->nid));
-  $node->engage->user = user_load(array('uid' => $node->engage->uid));
-  $node->title = $node->twitter_username;
-// 
-//   return $engage;
-  return $node;
-}
+  $headers = array('Name', '', '', '', 'ReTweets', 'Replies/mentions', 'Broadcasts', 'Percentage Interaction');
 
-/**
- * Implementation of hook_insert().
- */
-function engage_insert($node) {
-// stdClass Object ( [uid] => 1 [created] => 1277957378
-// [type] => engage [language] => [changed] => 1277957378
-// [twitter_username] => br3nda [revision] => 0 [log] => [name] => admin [date] => [status] => 1 [promote] => 1 [sticky] => 0 [op] => Save [submit] => Save [preview] => Preview [form_build_id] => form-97fb016a425b9299bff1a4920446a99e [form_token] => a79145996f8efe3b91c9cee5eb7fcc8f [form_id] => engage_node_form [comment] => 2 [menu] => Array ( [mlid] => 0 [module] => menu [hidden] => 0 [has_children] => 0 [customized] => 0 [options] => Array ( ) [expanded] => 0 [parent_depth_limit] => 8 [link_title] => [parent] => primary-links:0 [weight] => 0 [plid] => 0 [menu_name] => primary-links ) [teaser] => [format] => 0 [validated] => 1 [is_new] => 1 [body] => [timestamp] => 1277957378 [title] => [vid] => 8 [moderate] => 0 [tnid] => 0 [translate] => 0 [nid] => 8 )
-
-
-
-  $user->name = $node->twitter_username;
-  drupal_set_message(print_r($user, 1));
-
-  $user = user_save($user, array('name' => $node->twitter_username));
-
-  module_load_include('inc', 'twitter');
-  twitter_user_save(array('uid' => $user->uid, 'screen_name' => $node->twitter_username));
-//   Array ( [uid] => 1 [screen_name] => megan [password] => [import] => 1 [op] => Add account [submit] => Add account [form_build_id] => form-602719b41347547528c29eedb3e4e152 [form_token] => af85b74b98f850c097c8abc44b8147f7 [form_id] => twitter_add_account )
-  $result = db_query("INSERT INTO {engage_users} (uid, nid) VALUES (%d,%d)", $user->uid, $node->nid);
-
-
-
-}
-
-/**
- * Implementation of hook_update().
- */
-function engage_update($node) {
- 
-}
-
-/**
- * Implementation of hook_delete().
- */
-function engage_delete($node) {
- 
-}
-
-/**
- * Implementation of hook_view().
- *
- * @param $block
- *   An extra parameter that adapts the hook to display a block-ready
- *   rendering of the engage.
- */
-function engage_view($node, $teaser = FALSE, $page = FALSE, $block = FALSE) {
-
-  $node->content['body'] = array(
-    '#value' => print_r($node, 1),
-  );
-  return $node;
-}
-
-/**
- * Creates a simple teaser that lists all the choices.
- *
- * This is primarily used for RSS.
- */
-function engage_teaser($node) {
-  $teaser = NULL;
-  if (is_array($node->choice)) {
-    foreach ($node->choice as $k => $choice) {
-      if ($choice['chtext'] != '') {
-        $teaser .= '* '. check_plain($choice['chtext']) ."\n";
-      }
+  while ($account = db_fetch_array($result)) {
+    unset($node);
+    if (!$account['nid']) {
+      $node->title = $account['screen_name'];
+      $node->type = 'engage';
+      $node->published = 0;
+      node_save($node);
+      db_query("INSERT INTO {engage_users} (screen_name, nid) VALUES ('%s', %d)", $account['screen_name'], $node->nid);
+      drupal_set_message(sprintf("New node made %d %d", $account['uid'], $node->nid) );
     }
-  }
-  return $teaser;
-}
-
-
-/**
- * Generates a graphical representation of the results of a engage.
- */
-function engage_view_results(&$node, $teaser, $page, $block) {
-/*  // Count the votes and find the maximum
-  $total_votes = 0;
-  $max_votes = 0;
-  foreach ($node->choice as $choice) {
-    if (isset($choice['chvotes'])) {
-      $total_votes += $choice['chvotes'];
-      $max_votes = max($max_votes, $choice['chvotes']);
+    else {
+      $node = node_load(array('nid' => $account['nid']));
     }
+    $e = $engage[$account['screen_name']];
+    $b = $broadcast[$account['screen_name']];
+    $rt = $retweets[$account['screen_name']];
+    $total = $e+$b;
+    
+    if ($total) 
+    $percent_engage = ($e / $total) * 100;
+    else
+    $percent_engage = 0;
+      
+    $rows[] = array($account['screen_name'],
+      l('user', 'user/'. $account['uid']),
+      l('twitter', 'http://www.twitter.com/' . $account['screen_name']),
+      l('node', 'node/'. $node->nid),
+      $rt, $e, $b, sprintf('%.2f%%', $percent_engage),
+    );
   }
+  $output .= theme('table', $headers, $rows);
 
-  $engage_results = '';
-  foreach ($node->choice as $i => $choice) {
-    if (!empty($choice['chtext'])) {
-      $chvotes = isset($choice['chvotes']) ? $choice['chvotes'] : NULL;
-      $engage_results .= theme('engage_bar', $choice['chtext'], $chvotes, $total_votes, isset($node->vote) && $node->vote == $i, $block);
-    }
-  }
-
-  return theme('engage_results', $node->title, $engage_results, $total_votes, isset($node->links) ? $node->links : array(), $block, $node->nid, isset($node->vote) ? $node->vote : NULL);*/
-}
-
-/**
- * Implementation of hook_user().
- */
-function engage_user($op, &$edit, &$user) {
-  if ($op == 'delete') {
-//     db_query('UPDATE {engage_votes} SET uid = 0 WHERE uid = %d', $user->uid);
-  }
+  return $output;
 }
