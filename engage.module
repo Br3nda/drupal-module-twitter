@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * Implementation of hook_menu().
+ */
+function engage_menu() {
+  $items['engage'] = array(
+    'title' => 'Engage',
+    'page callback' => 'engage_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+
+  return $items;
+}
+
+function engage_cron() {
+  engage_cache();
+}
+
+function engage_pattern_count($pattern) {
+  $result = db_query("select screen_name, count(twitter_id) from twitter where text $pattern group by screen_name;");
+  while($b = db_fetch_array($result)) {
+    $matches[$b['screen_name']] = $b['count'];
+  }
+  return $matches;
+}
+
+function engage_cache() {
+      module_load_include('inc', 'twitter');
+
+
+  $result = db_query("SELECT * FROM {twitter_account}");
+  $output = '';
+
+  $retweets = engage_pattern_count(" like 'RT %'");
+  $engage = engage_pattern_count(" like '@%'"); 
+  $broadcast = engage_pattern_count("not like '%@%'");
+
+  db_query("TRUNCATE TABLE {engage_cache}");
+
+  while ($account = db_fetch_array($result)) {
+    twitter_fetch_timeline($account['screen_name']);
+    $e = $engage[$account['screen_name']];
+    $b = $broadcast[$account['screen_name']];
+    $rt = $retweets[$account['screen_name']];
+
+    $total = $e + $b + $rt;
+
+    if ($total) $percent_engage = ($e  / $total) * 100;
+    else $percent_engage = 0;
+
+    db_query("INSERT INTO {engage_cache} (screen_name, replies, retweets, broadcasts, interaction_percent) VALUES ('%s', %d, %d, %d, %f)", $account['screen_name'], $e, $rt, $b, $percent_engage);
+  }
+
+}
+
+function engage_page() {
+//  engage_cache();
+  $output = '<p>The following are New Zealand members of parliament on twitter.</p><p>ReTweets do not count towards interaction because they are so frequently retweeting their own or their party\'s official blog. Tweets are imported using the <a href="http://drupal.org/project/twitter">drupal twitter module</a>. Updates are several hours apart so that I make less queries tothe Twitter API and therefore don\'t get my IP banned.</p>';
+  $output .= '<p>Feedback and comments welcome <a href="http://coffee.geek.nz/mps-twitter.html">on this blog post</a>. </p>';
+  $headers = array(
+	'',
+    array('data' => 'Name', 'field' => 'screen_name'),
+    '',
+    array('data' => 'ReTweets', 'field'=> 'retweets'),
+    array('data' => '@Replies', 'field' => 'replies'),
+    array('data' => 'Broadcasts', 'field' => 'broadcasts'), 
+    array('data' => '% Interaction', 'field' => 'interaction_percent', 'sort' => 'desc'));
+  $result= db_query("SELECT e.*, t.description, t.profile_image_url FROM {engage_cache} e INNER JOIN {twitter_account} t ON e.screen_name = t.screen_name" . tablesort_sql($headers));
+  while($r = db_fetch_object($result)) {
+
+    $latest_tweet = db_fetch_object(db_query("SELECT * FROM {twitter} WHERE screen_name='%s' ORDER BY created_time DESC LIMIT 1", $r->screen_name));
+
+    $rows[] = array(
+	'<img src="'. htmlentities($r->profile_image_url) .'" width="48"/>',
+      l($r->screen_name, 'http://twitter.com/'. $r->screen_name).'<br/><small>'. check_plain($r->description) .'</small>', 
+      '<small><strong>'. format_date($latest_tweet->created_time, 'small').'</strong>:<br/>'. check_plain($latest_tweet->text) .'</small>',
+    $r->retweets, $r->replies, $r->broadcasts, sprintf('%.2f%%', $r->interaction_percent));
+  }
+  $output .= theme('table', $headers, $rows); 
+  return $output;
+  
+}

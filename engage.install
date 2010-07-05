@@ -1,0 +1,108 @@
+<?php
+
+function engage_schema() {
+  $schema['engage_users'] = array(
+    'fields' => array(
+      'screen_name' => array('type' => 'text', 'not null' => TRUE),
+      'nid' => array('type' => 'int', 'not null' => TRUE),
+      'real_name' => array('type' => 'text'),
+      'reply_count' => array('type' => 'int', 'default' => 0),
+    ),
+    'primary key' => array('screen_name'),
+
+  );
+
+  $schema['engage_cache'] = array(
+    'fields' => array(
+      'screen_name' => array('type' => 'text', 'not null' => TRUE),
+      'replies' => array('type' => 'int'),
+      'retweets' => array('type' => 'int'),
+      'broadcasts' => array('type' => 'int'),
+      'urls' => array('type' => 'int'),
+      'interaction_percent' => array('type' => 'float', 'default' => 0),
+    ),
+  );
+  return $schema;
+}
+
+function engage_install() {
+  drupal_install_schema('engage');
+}
+
+function engage_uninstall() {
+  drupal_uninstall_schema('engage');
+  update_sql("DELETE FROM {node} where type='engage'");
+}
+
+function engage_update_1() {
+  drupal_uninstall_schema('engage');
+
+   drupal_install_schema('engage');
+ engage_data_load();
+
+}
+
+function engage_data_load() {
+    module_load_include('inc', 'twitter');
+
+  $account['uid'] =1;
+
+  $mps = array(
+	'robmuldoon',
+    'PaulQuinnMP',
+    'GarethMP',
+    'StuartNashMP',
+    'MaungakiekieSAM',
+    'SWSio',
+    'rogerdouglas',
+    'rodneyhide',
+    'LynnePillay',
+    'jcolemanmp',
+    'JackieBlueMP',
+    'CJTremain',
+    'ChrisAuchinvole',
+    'ChesterBorrows',
+    'carmelsepuloni',
+    'aarongilmore',
+    'DarienFenton',
+    'HeatherRoyMP',
+    'DavidShearerMP',
+    'amyadamsMP',
+    'DavidClendon',
+    'chrisfinlayson',
+    'nikkikaye',
+    'katrinashanks',
+    'LianneDalzielMP',
+    'hondavidcarter',
+    'jacindaardern',
+    'MoanaMackey',
+    'darrenhughesmp',
+    'metiria',
+    'leesgallowaymp',
+    'grantrobertson1',
+    'chrishipkins',
+    'annettekingmp',
+    'phil_goff',
+    'greencatherine',
+    'KeithLocke',
+    'clarecurranmp',
+    'johnkeypm',
+    'CraigFossMP',
+    'RusselNorman',
+    'KevinHague',
+    'charleschauvel',
+    'PhilTwyford',
+    'LouiseUpston',
+'KennedyGraham',
+'SusieKew',
+  );
+
+  foreach($mps as $name) {
+    $account['screen_name'] = $name;
+    twitter_user_save($account, true);
+    drupal_set_message($name);
+//     twitter_cache_account
+  }
+  return '';
+}
+
