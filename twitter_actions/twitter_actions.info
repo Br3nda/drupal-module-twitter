@@ -1,5 +1,6 @@
-; $Id: twitter_actions.info,v 1.1 2008/09/25 15:45:52 eaton Exp $
+; $Id: twitter_actions.info,v 1.1.4.1 2010/10/20 16:37:30 walkah Exp $
 name = Twitter actions
 description = Exposes Drupal actions to send Twitter messages.
-dependencies[] = twitter
 core = 6.x
+dependencies[] = twitter
+dependencies[] = oauth
