@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_actions.module,v 1.2.2.1 2010/10/20 15:10:59 walkah Exp $
+// $Id: twitter_actions.module,v 1.2.2.2 2010/10/20 15:21:43 walkah Exp $
 
 /**
  * @file
@@ -55,7 +55,7 @@ function twitter_actions_set_status_action_form($context = array()) {
     '#default_value' => $context['message'],
     '#cols' => '80',
     '#rows' => '3',
-    '#description' => t('The message that should be sent. You may include the following variables: %site_name, %username, %node_url, %node_type, %title, %teaser, %body. Not all variables will be available in all contexts.'),
+    '#description' => t('The message that should be sent. You may include the following variables: %site_name, %username, %node_url, %node_type, %title, %teaser, %body, %tinyurl. Not all variables will be available in all contexts.'),
     '#required'      => TRUE,
   );
   return $form;
@@ -156,6 +156,13 @@ function twitter_actions_set_status_action($object, $context) {
         '%body' => $node->body
       )
     );
+  }
+
+  // Only make a tinyurl if it was asked for.
+  if (strstr($context['message'], '%tinyurl') !== FALSE) {
+    $variables = array_merge($variables, array(
+      '%tinyurl' => twitter_shorten_url(url('node/'. $node->nid, array('absolute' => TRUE))),
+    ));
   }
 
   $message = strtr($context['message'], $variables);
