@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter_actions.module,v 1.2.2.2 2010/10/20 15:21:43 walkah Exp $
+// $Id: twitter_actions.module,v 1.2.2.3 2010/10/20 15:59:11 walkah Exp $
 
 /**
  * @file
@@ -93,6 +93,7 @@ function twitter_actions_set_status_action($object, $context) {
 
   switch ($context['hook']) {
     case 'nodeapi':
+    case 'workflow':
       // Because this is not an action of type 'node' the node
       // will not be passed as $object, but it will still be available
       // in $context.
