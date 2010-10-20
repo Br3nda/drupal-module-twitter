@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.lib.php,v 1.1.2.5 2010/02/14 04:11:45 walkah Exp $
+// $Id: twitter.lib.php,v 1.1.2.6 2010/10/20 15:18:10 walkah Exp $
 
 /**
  * @file
@@ -77,13 +77,22 @@ class Twitter {
    */
   protected function get_statuses($path, $params = array(), $use_auth = FALSE) {
     $values = $this->call($path, $params, 'GET', $use_auth);
-    $statuses = array();
-    foreach ($values as $status) {
-      $statuses[] = new TwitterStatus($status);
+    // Check on successfull call
+    if ($values) {
+      $statuses = array();
+      foreach ($values as $status) {
+        $statuses[] = new TwitterStatus($status);
+      }
+      return $statuses;
     }
-    return $statuses;
+    // Call might return FALSE , e.g. on failed authentication
+    else {
+      // As call allready throws an exception, we can return an empty array to
+      // break no code.
+      return array();
+    }
   }
-  
+
   /**
    * Fetch the public timeline
    *
@@ -135,12 +144,12 @@ class Twitter {
     if ($this->source) {
       $params['source'] = $this->source;
     }
-    $values = $this->call('statuses/update', $params, 'POST', TRUE); 
+    $values = $this->call('statuses/update', $params, 'POST', TRUE);
 
     return new TwitterStatus($values);
   }
 
-  
+
   /**
    *
    * @see http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
@@ -169,14 +178,14 @@ class Twitter {
     }
     return new TwitterUser($values);
   }
-  
+
 
   /**
    * Method for calling any twitter api resource
    */
   public function call($path, $params = array(), $method = 'GET', $use_auth = FALSE) {
     $url = $this->create_url($path);
-    
+
     try {
       if ($use_auth) {
         $response = $this->auth_request($url, $params, $method);
@@ -192,10 +201,10 @@ class Twitter {
     if (!$response) {
       return FALSE;
     }
-    
+
     return $this->parse_response($response);
   }
-  
+
   /**
    * Perform an authentication required request.
    */
@@ -227,7 +236,7 @@ class Twitter {
       $headers['Authorization'] = 'Basic '. base64_encode($this->username .':'. $this->password);
       $headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
-    
+
     $response = drupal_http_request($url, $headers, $method, $data);
     if (!$response->error) {
       return $response->data;
@@ -252,12 +261,12 @@ class Twitter {
         return json_decode($response, TRUE);
     }
   }
-  
+
   protected function create_url($path, $format = NULL) {
     if (is_null($format)) {
       $format = $this->format;
     }
-    
+
     $url =  'http://'. $this->host .'/'. $path;
     if (!empty($format)) {
       $url .= '.'. $this->format;
@@ -272,11 +281,11 @@ class Twitter {
 class TwitterOAuth extends Twitter {
 
   protected $signature_method;
-  
+
   protected $consumer;
 
   protected $token;
-  
+
   public function __construct($consumer_key, $consumer_secret, $oauth_token = NULL, $oauth_token_secret = NULL) {
     $this->signature_method = new OAuthSignatureMethod_HMAC_SHA1();
     $this->consumer = new OAuthConsumer($consumer_key, $consumer_secret);
@@ -300,14 +309,14 @@ class TwitterOAuth extends Twitter {
   public function get_authorize_url($token) {
     $url = $this->create_url('oauth/authorize', '');
     $url.= '?oauth_token=' . $token['oauth_token'];
-  
+
     return $url;
   }
 
   public function get_authenticate_url($token) {
     $url = $this->create_url('oauth/authenticate', '');
     $url.= '?oauth_token=' . $token['oauth_token'];
-    
+
     return $url;
   }
 
@@ -322,7 +331,7 @@ class TwitterOAuth extends Twitter {
     $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
     return $token;
   }
-  
+
   public function auth_request($url, $params = array(), $method = 'GET') {
     $request = OAuthRequest::from_consumer_and_token($this->consumer, $this->token, $method, $url, $params);
     $request->sign_request($this->signature_method, $this->consumer, $this->token);
@@ -341,7 +350,7 @@ class TwitterSearch extends Twitter {
   protected $host = 'search.twitter.com';
 
   public function search($params = array()) {
-    
+
   }
 }
 
@@ -369,7 +378,7 @@ class TwitterStatus {
   public $in_reply_to_user_id;
 
   public $in_reply_to_screen_name;
-  
+
   public $user;
 
   /**
@@ -389,7 +398,7 @@ class TwitterStatus {
       $this->user = new TwitterUser($values['user']);
     }
   }
-  
+
 }
 
 class TwitterUser {
@@ -425,11 +434,11 @@ class TwitterUser {
   public $profile_link_color;
 
   public $profile_sidebar_fill_color;
-  
+
   public $profile_sidebar_border_color;
 
   public $profile_background_image_url;
-  
+
   public $profile_background_tile;
 
   public $verified;
@@ -439,15 +448,15 @@ class TwitterUser {
   public $created_time;
 
   public $utc_offset;
-  
+
   public $status;
-  
+
   protected $password;
-  
+
   protected $oauth_token;
 
   protected $oauth_token_secret;
-  
+
   public function __construct($values = array()) {
     $this->id = $values['id'];
     $this->screen_name = $values['screen_name'];
@@ -474,7 +483,7 @@ class TwitterUser {
       $this->created_time = $created_time;
     }
     $this->utc_offset = $values['utc_offset'];
-    
+
     if ($values['status']) {
       $this->status = new TwitterStatus($values['status']);
     }
