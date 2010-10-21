@@ -1,5 +1,5 @@
 <?php
-// $Id: twitter.module,v 1.10.2.6 2010/10/20 15:48:19 walkah Exp $
+// $Id: twitter.module,v 1.10.2.7 2010/10/21 15:12:17 walkah Exp $
 
 /**
  * Implementation of hook_meu()
@@ -57,7 +57,7 @@ function twitter_menu() {
  * Implementation of hook_perm()
  */
 function twitter_perm() {
-  return array('add twitter accounts', 'use global twitter account', 'make twitter accounts global');
+  return array('add twitter accounts', 'use global twitter account', 'make twitter accounts global', 'import own tweets');
 }
 
 /**
